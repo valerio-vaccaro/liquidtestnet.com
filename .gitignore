@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Local rules
+venv
+venv3
+liquid.conf
+chain/*
+elements-*

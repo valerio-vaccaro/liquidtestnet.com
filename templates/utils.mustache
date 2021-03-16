@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta name="author" content="Valerio Vaccaro">
+      <link rel="icon" href="">
+      <title>Liquid faucet</title>
+      <link href="/static/bootstrap.min.css" rel="stylesheet">
+      <link href="/static/base.css" rel="stylesheet">
+      <script src="/static/jquery.min.js"></script>
+      <script src="/static/bootstrap.min.js"></script>
+   </head>
+   <body>
+      <nav class="navbar navbar-inverse navbar-fixed-top">
+         <div class="container">
+            <div class="navbar-header">
+              <a class="navbar-brand" href="/">Home</a>
+              <a class="navbar-brand" href="/explorer">Explorer</a>
+              <a class="navbar-brand" href="/faucet">Faucet</a>
+              <a class="navbar-brand" href="/issuer">Issuer</a>
+              <a class="navbar-brand" href="/utils">Utils</a>
+              <a class="navbar-brand" href="/about">About</a>
+            </div>
+         </div>
+      </nav>
+      <div class="container-fluid">
+         <br/><br/><br/><br/>
+         <div id="sl">
+            <br/><br/>
+            <div class="well">
+               <h3>Write a phrase using OP_RETURN</h3>
+               {{^form_opreturn}}
+               <p>{{result_opreturn}}</p>
+               {{/form_opreturn}}
+               {{#form_opreturn}}
+               <form action="/utils" method="get">
+                   <input type="hidden" id="command" name="command" value="opreturn">
+                   <div class="form-group row">
+                      <label for="address" class="col-sm-2 col-form-label">Phrase in hex</label>
+                      <div class="col-sm-10">
+                         <input type="text" class="form-control" name="text" required="required" id="text" placeholder="deadbeef">
+                      </div>
+                   </div>
+                   <div class="form-group row">
+                      <div class="col-sm-10">
+                         <button type="submit" class="btn btn-success" name="action" value="send">Write</button>
+                      </div>
+                   </div>
+                </form>
+                {{/form_opreturn}}
+            </div>
+
+            <div class="well">
+               <h3>Test a transaction</h3>
+               {{^form_test}}
+               <p>{{result_test}}</p>
+               {{/form_test}}
+               {{#form_test}}
+               <form action="/utils" method="get">
+                   <input type="hidden" id="command" name="command" value="test">
+                   <div class="form-group row">
+                      <label for="tx" class="col-sm-2 col-form-label">Transaction in hex</label>
+                      <div class="col-sm-10">
+                         <textarea rows = "5" type="text" class="form-control" name="tx" required="required" id="tx" placeholder="tx"></textarea>
+                      </div>
+                   </div>
+                   <div class="form-group row">
+                      <div class="col-sm-10">
+                         <button type="submit" class="btn btn-warning" name="action" value="broadcast">Test</button>
+                      </div>
+                   </div>
+                </form>
+                {{/form_test}}
+              </div>
+
+              <div class="well">
+               <h3>Broadcast a transaction</h3>
+               {{^form_broadcast}}
+               <p>{{result_broadcast}}</p>
+               {{/form_broadcast}}
+               {{#form_broadcast}}
+               <form action="/utils" method="get">
+                   <input type="hidden" id="command" name="command" value="broadcast">
+                   <div class="form-group row">
+                      <label for="tx" class="col-sm-2 col-form-label">Transaction in hex</label>
+                      <div class="col-sm-10">
+                         <textarea rows = "5" type="text" class="form-control" name="tx" required="required" id="tx" placeholder="tx"></textarea>
+                      </div>
+                   </div>
+                   <div class="form-group row">
+                      <div class="col-sm-10">
+                         <button type="submit" class="btn btn-danger" name="action" value="broadcast">Broadcast</button>
+                      </div>
+                   </div>
+                </form>
+                {{/form_broadcast}}
+
+            </div>
+         </div>
+      </div>
+      </div>
+   </body>
+</html>

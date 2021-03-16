@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta name="author" content="Valerio Vaccaro">
+      <link rel="icon" href="">
+      <title>Liquid faucet</title>
+      <link href="/static/bootstrap.min.css" rel="stylesheet">
+      <link href="/static/base.css" rel="stylesheet">
+      <script src="/static/jquery.min.js"></script>
+      <script src="/static/bootstrap.min.js"></script>
+   </head>
+   <body>
+      <nav class="navbar navbar-inverse navbar-fixed-top">
+         <div class="container">
+            <div class="navbar-header">
+              <a class="navbar-brand" href="/">Home</a>
+              <a class="navbar-brand" href="/explorer">Explorer</a>
+              <a class="navbar-brand" href="/faucet">Faucet</a>
+              <a class="navbar-brand" href="/issuer">Issuer</a>
+              <a class="navbar-brand" href="/utils">Utils</a>
+              <a class="navbar-brand" href="/about">About</a>
+            </div>
+         </div>
+      </nav>
+      <div class="container-fluid">
+         <br/><br/><br/><br/>
+         <div id="sl">
+            <br/><br/>
+            <div class="well">
+               <h3>Faucet</h3>
+               <p>Balance: {{balance}}</p>
+               {{^form}}
+               <p>{{result}}</p>
+               {{/form}}
+               {{#form}}
+               <form action="/faucet" method="get">
+                   <input type="hidden" id="command" name="command" value="faucet">
+                   <div class="form-group row">
+                      <label for="address" class="col-sm-2 col-form-label">Address</label>
+                      <div class="col-sm-10">
+                         <input type="text" class="form-control" name="address" required="required" id="address" placeholder="address">
+                      </div>
+                   </div>
+                   <div class="form-group row">
+                      <div class="col-sm-10">
+                         <button type="submit" class="btn btn-danger" name="action" value="send">Send assets</button>
+                      </div>
+                   </div>
+                </form>
+                {{/form}}
+            </div>
+         </div>
+      </div>
+      </div>
+   </body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta name="description" content="Liquidtestnet.com">
+      <meta name="author" content="Valerio Vaccaro">
+      <link rel="icon" href="">
+      <title>Liquid testnet</title>
+      <link href="/static/bootstrap.min.css" rel="stylesheet">
+      <link href="/static/base.css" rel="stylesheet">
+      <script src="/static/jquery.min.js"></script>
+      <script src="/static/bootstrap.min.js"></script>
+   </head>
+   <body>
+      <nav class="navbar navbar-inverse navbar-fixed-top">
+         <div class="container">
+            <div class="navbar-header">
+               <a class="navbar-brand" href="/">Home</a>
+               <a class="navbar-brand" href="/explorer">Explorer</a>
+               <a class="navbar-brand" href="/faucet">Faucet</a>
+               <a class="navbar-brand" href="/issuer">Issuer</a>
+               <a class="navbar-brand" href="/utils">Utils</a>
+               <a class="navbar-brand" href="/about">About</a>
+            </div>
+         </div>
+      </nav>
+      <div class="container-fluid">
+         <br/><br/><br/><br/>
+         <div id="sl">
+            <br/><br/>
+            <div class="well">
+                <h3>Last blocks</h3>
+                <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Height</th>
+                    <th scope="col">Block hash</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Timestamp</th>
+                    <th scope="col">Transaction no.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#blocks_list}}
+                  <tr>
+                    <td><a href="block?height={{id}}">{{id}}</a></td>
+                    <td>{{hash}}</td>
+                    <td>{{size}}</td>
+                    <td>{{time}}</td>
+                    <td>{{nTx}}</td>
+                  </tr>
+                  {{/blocks_list}}
+                  <table style="width:100%">
+                  <tbody>
+                    <tr><td style="text-align:left"><a href='explorer?start={{next}}'> Next </a></td>
+                        <td style="text-align:right"><a href='explorer?start={{prev}}'> Prev </a></td></tr>
+                  </tbody>
+                </table>
+         </div>
+      </div>
+      </div>
+   </body>
+</html>

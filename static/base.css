@@ -1,0 +1,13 @@
+p {
+  word-wrap:break-word;
+}
+a {
+  word-wrap:break-word;
+}
+h3 {
+  word-wrap:break-word;
+}
+div#sl {
+  width: 80%;
+  margin: 0 auto;
+}

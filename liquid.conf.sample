@@ -1,0 +1,10 @@
+[GENERAL]
+liquid_instance: LIQUID
+
+[LIQUID]
+host:
+port:
+username:
+password:
+wallet:
+passphrase:

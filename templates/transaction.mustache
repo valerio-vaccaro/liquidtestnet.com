@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta name="description" content="Liquidtestnet.com">
+      <meta name="author" content="Valerio Vaccaro">
+      <link rel="icon" href="">
+      <title>Liquid testnet</title>
+      <link href="/static/bootstrap.min.css" rel="stylesheet">
+      <link href="/static/base.css" rel="stylesheet">
+      <script src="/static/jquery.min.js"></script>
+      <script src="/static/bootstrap.min.js"></script>
+   </head>
+   <body>
+      <nav class="navbar navbar-inverse navbar-fixed-top">
+         <div class="container">
+            <div class="navbar-header">
+               <a class="navbar-brand" href="/">Home</a>
+               <a class="navbar-brand" href="/explorer">Explorer</a>
+               <a class="navbar-brand" href="/faucet">Faucet</a>
+               <a class="navbar-brand" href="/issuer">Issuer</a>
+               <a class="navbar-brand" href="/utils">Utils</a>
+               <a class="navbar-brand" href="/about">About</a>
+            </div>
+         </div>
+      </nav>
+      <div class="container-fluid">
+         <br/><br/><br/><br/>
+         <div id="sl">
+            <br/><br/>
+            <div class="well">
+              <h3 style="word-wrap:break-word">Transaction {{txid}}</h3>
+              <p>{{error}}</p>
+              <pre><code>{{result}}</code></pre>
+            </div>
+         </div>
+      </div>
+      </div>
+   </body>
+</html>
