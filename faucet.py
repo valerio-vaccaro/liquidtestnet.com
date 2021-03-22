@@ -292,6 +292,7 @@ def url_issuer():
         data = issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubkey, name, ticker, precision, domain)
         data['form'] = False
         data['domain'] = domain
+        data['name'] = name
     else:
         data = {}
         data['form'] = True

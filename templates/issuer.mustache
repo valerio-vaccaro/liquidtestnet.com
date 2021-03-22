@@ -40,10 +40,15 @@
 Authorize linking the domain name {{domain}} to the Liquid asset {{asset_id}}
               </code></pre>
               </p>
-              <p>And regsister executing the following command
+              <p>And register executing the following command
               <pre><code>
 curl https://assets.blockstream.info/ --data-raw '{{registry}}'
               </code></pre>
+              <p>In order to see the name in your node you can add to elements core config file the following line:
+              <pre><code>
+assetdir={{asset_id}}:{{name}} - {{domain}}
+              </code></pre>
+              </p>
               </p>
               {{/form}}
               {{#form}}
