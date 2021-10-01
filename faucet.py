@@ -212,7 +212,7 @@ def url_faucet():
         data['form'] = True
         return render_template('faucet', **data)
 
-    amount = 0.001
+    amount = 1
     data = {'result': faucet(address, amount), 'balance': balance}
     data['form'] = False
     return render_template('faucet', **data)
