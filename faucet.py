@@ -196,13 +196,13 @@ def faucet(address, amount):
 
 
 @app.route('/api/faucet', methods=['GET'])
-@limiter.limit('100/day;20/hour;3/minute')
+@limiter.limit('100000/day;1000/hour;100/minute')
 def api_faucet():
     return jsonify({'error': 'not implemented'})
 
 
 @app.route('/faucet', methods=['GET'])
-@limiter.limit('100/day;20/hour;3/minute')
+@limiter.limit('100000/day;1000/hour;100/minute')
 def url_faucet():
     balance = host.call('getbalance')['bitcoin']
     address = request.args.get('address')
