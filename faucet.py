@@ -198,7 +198,17 @@ def faucet(address, amount):
 @app.route('/api/faucet', methods=['GET'])
 @limiter.limit('100000/day;1000/hour;100/minute')
 def api_faucet():
-    return jsonify({'error': 'not implemented'})
+    balance = host.call('getbalance')['bitcoin']
+    address = request.args.get('address')
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+
+    if address is None:
+        data = {'result': 'missing address', 'balance': balance}
+        return jsonify(data)
+
+    amount = 0.001
+    data = {'result': faucet(address, amount), 'balance': balance}
+    return jsonify(data)
 
 
 @app.route('/faucet', methods=['GET'])
@@ -206,6 +216,7 @@ def api_faucet():
 def url_faucet():
     balance = host.call('getbalance')['bitcoin']
     address = request.args.get('address')
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if address is None:
         data = {'result': 'missing address', 'balance': balance}
@@ -272,12 +283,30 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
 @app.route('/api/issuer', methods=['GET'])
 @limiter.limit('100/day;20/hour;3/minute')
 def api_issuer():
-    return jsonify({'error': 'not implemented'})
+        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        command = request.args.get('command')
+        if command == 'asset':
+            asset_amount = int(request.args.get('asset_amount'))
+            asset_address = request.args.get('asset_address')
+            token_amount = int(request.args.get('token_amount'))
+            token_address = request.args.get('token_address')
+            issuer_pubkey = request.args.get('pubkey')
+            name = request.args.get('name')
+            ticker = request.args.get('ticker')
+            precision = request.args.get('precision')
+            domain = request.args.get('domain')
+            data = issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubkey, name, ticker, precision, domain)
+            data['domain'] = domain
+            data['name'] = name
+        else:
+            data = {}
+    return jsonify(data)
 
 
 @app.route('/issuer', methods=['GET'])
 @limiter.limit('100/day;20/hour;3/minute')
 def url_issuer():
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
     if command == 'asset':
         asset_amount = int(request.args.get('asset_amount'))
@@ -324,12 +353,26 @@ def broadcast(tx):
 @app.route('/api/utils', methods=['GET'])
 @limiter.limit('100/day;20/hour;3/minute')
 def api_utils():
-    return jsonify({'error': 'not implemented'})
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    command = request.args.get('command')
+    if command == 'opreturn':
+        text = request.args.get('text')
+        data = {'result_opreturn': opreturn(text)}
+    elif command == 'test':
+        tx = request.args.get('tx')
+        data = {'result_test': test(tx)}
+    elif command == 'broadcast':
+        tx = request.args.get('tx')
+        data = {'result_broadcast': broadcast(tx)}
+    else:
+        data = {}
+    return jsonify(data)
 
 
 @app.route('/utils', methods=['GET'])
 @limiter.limit('100/day;20/hour;3/minute')
 def url_utils():
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
     if command == 'opreturn':
         text = request.args.get('text')
