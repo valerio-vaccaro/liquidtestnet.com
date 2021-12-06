@@ -283,23 +283,23 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
 @app.route('/api/issuer', methods=['GET'])
 @limiter.limit('100/day;20/hour;3/minute')
 def api_issuer():
-        ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        command = request.args.get('command')
-        if command == 'asset':
-            asset_amount = int(request.args.get('asset_amount'))
-            asset_address = request.args.get('asset_address')
-            token_amount = int(request.args.get('token_amount'))
-            token_address = request.args.get('token_address')
-            issuer_pubkey = request.args.get('pubkey')
-            name = request.args.get('name')
-            ticker = request.args.get('ticker')
-            precision = request.args.get('precision')
-            domain = request.args.get('domain')
-            data = issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubkey, name, ticker, precision, domain)
-            data['domain'] = domain
-            data['name'] = name
-        else:
-            data = {}
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    command = request.args.get('command')
+    if command == 'asset':
+        asset_amount = int(request.args.get('asset_amount'))
+        asset_address = request.args.get('asset_address')
+        token_amount = int(request.args.get('token_amount'))
+        token_address = request.args.get('token_address')
+        issuer_pubkey = request.args.get('pubkey')
+        name = request.args.get('name')
+        ticker = request.args.get('ticker')
+        precision = request.args.get('precision')
+        domain = request.args.get('domain')
+        data = issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubkey, name, ticker, precision, domain)
+        data['domain'] = domain
+        data['name'] = name
+    else:
+        data = {}
     return jsonify(data)
 
 
