@@ -4,7 +4,7 @@ from flask import (
     jsonify,
 )
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from flask_limiter.util import get_ipaddr
 from flask_stache import render_template
 from flask_qrcode import QRcode
 from bitcoin_rpc_class import RPCHost
