@@ -16,7 +16,7 @@ import wallycore as wally
 app = Flask(__name__, static_url_path='/static')
 limiter = Limiter(
     app,
-    key_func=get_remote_address,
+    key_func=get_ipaddr,
     default_limits=["200 per day", "50 per hour"]
 )
 qrcode = QRcode(app)
@@ -196,7 +196,7 @@ def faucet(address, amount):
 
 
 @app.route('/api/faucet', methods=['GET'])
-@limiter.limit('100000/day;1000/hour;100/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
     balance = host.call('getbalance')['bitcoin']
     address = request.args.get('address')
@@ -212,7 +212,7 @@ def api_faucet():
 
 
 @app.route('/faucet', methods=['GET'])
-@limiter.limit('100000/day;1000/hour;100/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
     balance = host.call('getbalance')['bitcoin']
     address = request.args.get('address')
@@ -281,7 +281,7 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
 
 
 @app.route('/api/issuer', methods=['GET'])
-@limiter.limit('100/day;20/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def api_issuer():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
@@ -304,7 +304,7 @@ def api_issuer():
 
 
 @app.route('/issuer', methods=['GET'])
-@limiter.limit('100/day;20/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def url_issuer():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
@@ -351,7 +351,7 @@ def broadcast(tx):
 
 
 @app.route('/api/utils', methods=['GET'])
-@limiter.limit('100/day;20/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def api_utils():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
@@ -370,7 +370,7 @@ def api_utils():
 
 
 @app.route('/utils', methods=['GET'])
-@limiter.limit('100/day;20/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def url_utils():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
