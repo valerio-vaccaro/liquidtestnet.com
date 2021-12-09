@@ -84,7 +84,7 @@ def explorer(start, last):
 @app.route('/api/explorer', methods=['GET'])
 @limiter.exempt
 def api_explorer():
-    elements = 10
+    elements = 120
     start = request.args.get('start')
     max = host.call('getblockcount')
 
@@ -107,7 +107,7 @@ def api_explorer():
 @app.route('/explorer', methods=['GET'])
 @limiter.exempt
 def url_explorer():
-    elements = 10
+    elements = 120
     start = request.args.get('start')
     max = host.call('getblockcount')
 
