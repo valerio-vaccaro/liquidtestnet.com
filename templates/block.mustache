@@ -29,15 +29,15 @@
          <div id="sl">
             <br/><br/>
             <div class="well">
-              <h3 style="word-wrap:break-word">Block {{block}}</h3>
+	      <h3 style="word-wrap:break-word">Block {{block}}</h3>
+              <h4>Transactions</h4>
+              {{#transaction_list}}
+                  <a style="word-wrap:break-word" href="./transaction?txid={{txid}}">{{txid}}</a>
+		  <a style="word-wrap:break-word" href="https://blockstream.info/liquidtestnet/{{txid}}" target="_blank">On Esplora</a><br/>
+              {{/transaction_list}}
+              <h4>Content</h4>
               <p>{{error}}</p>
               <pre><code>{{result}}</code></pre>
-            </div>
-            <div class="well">
-              <h3>Transactions</h3>
-              {{#transaction_list}}
-     	          <a style="word-wrap:break-word" href="./transaction?txid={{txid}}">{{txid}}</a><br/>
-     	        {{/transaction_list}}
             </div>
          </div>
       </div>
