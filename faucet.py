@@ -47,7 +47,7 @@ def stats():
     info = host.call('getblockchaininfo')
     mem = host.call('getmempoolinfo')
     data = {
-        'heigh': info['headers'],
+        'height': info['headers'],
         'mempool': str(mem['size']) + ' tx (' + str(round(mem['size'] / (1024 * 1024), 3)) + ' MB)',
         'space': str(round(info['size_on_disk'] / (1024 * 1024), 3)) + ' MB',
         'uptime': os.popen("uptime").read(),
