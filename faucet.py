@@ -12,7 +12,10 @@ from bitcoin_rpc_class import RPCHost
 import os
 import configparser
 import json
+import requests
 import wallycore as wally
+from greenaddress import init, Session
+
 
 app = Flask(__name__, static_url_path='/static')
 limiter = Limiter(
@@ -33,6 +36,13 @@ rpcUser = config.get(liquid_instance, 'username')
 rpcPassword = config.get(liquid_instance, 'password')
 rpcPassphrase = config.get(liquid_instance, 'passphrase')
 rpcWallet = config.get(liquid_instance, 'wallet')
+
+ampUrl =  config.get('AMP', 'url')
+ampToken =  config.get('AMP', 'token')
+ampUuid = config.get('AMP', 'assetuuid')
+
+gdkMnemonic = config.get('GDK', 'mnemonic')
+gdkSubaccount = config.get('GDK', 'subaccount')
 
 if (len(rpcWallet) > 0):
     serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + rpcHost + ':' + str(rpcPort) + '/wallet/' + rpcWallet
@@ -207,9 +217,76 @@ def faucet_test(address, amount):
         data = "Error"
     return data
 
+def faucet_amp(gaid, amount):
+    s = Session({"name":"testnet-liquid", "log_level":"info"})
+    s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
+    s.change_settings({"unit":"sats"}).resolve()
+    subaccount = -1
+
+    subaccounts = s.get_subaccounts().resolve()
+    for sub in subaccounts['subaccounts']:
+        if sub['name'] == gdkSubaccount:
+            if sub['type'] != '2of2_no_recovery':
+                print('Wrong subaccount type')
+                return 'Wrong subaccount type'
+            subaccount = sub['pointer']
+            break
+
+    if subaccount == -1:
+        print('Missing subaccount')
+        return 'Missing subaccount'
+
+    result = requests.get(f'{ampUrl}assets/{ampUuid}', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
+    assetid = result['asset_id']
+
+    result = requests.get(f'{ampUrl}gaids/{gaid}/validate', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
+    if not result['is_valid']:
+        return 'Invalid GAID'
+
+    result = requests.get(f'{ampUrl}gaids/{gaid}/address', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
+    if result['error'] == '' :
+        address = result['address']
+    else:
+        return 'Error in fetching address'
+
+    tx = {
+        'subaccount': subaccount,
+        'addressees': [{'satoshi': amount, 'address': address, 'asset_id': assetid}],
+    }
+
+    utxo_details = {'subaccount': subaccount, 'num_confs': 0}
+    utxos = s.get_unspent_outputs(json.dumps(utxo_details)).resolve()
+    tx['utxos'] = utxos['unspent_outputs']
+    txc = s.create_transaction(json.dumps(tx)).resolve()
+
+    txg = s.sign_transaction(txc).resolve()
+    txs = s.send_transaction(txg).resolve()
+    print('Transaction sent!')
+    print('txhash: {}'.format(txs["txhash"]))
+    data = "Sent " + str(amount) + " AMP to address " + address + " with transaction " + txs["txhash"] + "."
+    return data
+
+
 @app.route('/api/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
+    balance_amp = 0
+    try:
+        s = Session({"name":"testnet-liquid", "log_level":"info"})
+        s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
+        s.change_settings({"unit":"sats"}).resolve()
+        subaccount = -1
+        subaccounts = s.get_subaccounts().resolve()
+        for sub in subaccounts['subaccounts']:
+            if sub['name'] == gdkSubaccount:
+                if sub['type'] != '2of2_no_recovery':
+                    pass
+                subaccount = sub['pointer']
+                break
+        balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
+    except:
+        pass
+    
     balance = host.call('getbalance')['bitcoin']
     balance_test = host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
     address = request.args.get('address')
@@ -217,43 +294,70 @@ def api_faucet():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if address is None:
-        data = {'result': 'missing address', 'balance': balance, 'balance_test':balance_test}
+        data = {'result': 'missing address', 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         return jsonify(data)
 
     if asset == 'lbtc':
         amount = 0.001
-        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test':balance_test}
+        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
     elif asset == 'test':
-        amount = 0.1
-        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test':balance_test}
+        amount = 0.00005000
+        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+    elif asset == 'amp':
+        amount = 1
+        data = {'result_amp': faucet_amp(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
     return jsonify(data)
 
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
+    balance_amp = 0
+    try:
+        s = Session({"name":"testnet-liquid", "log_level":"info"})
+        s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
+        s.change_settings({"unit":"sats"}).resolve()
+        subaccount = -1
+        subaccounts = s.get_subaccounts().resolve()
+        for sub in subaccounts['subaccounts']:
+            if sub['name'] == gdkSubaccount:
+                if sub['type'] != '2of2_no_recovery':
+                    pass
+                subaccount = sub['pointer']
+                break
+        balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
+    except:
+        pass
     balance = host.call('getbalance')['bitcoin']
     balance_test = host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
     address = request.args.get('address')
     asset = request.args.get('action')
-    print(asset)
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if address is None:
-        data = {'result': 'missing address', 'balance': balance, 'balance_test':balance_test}
+        data = {'result': 'missing address', 'balance': balance, 'balance_test':balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = True
+        data['form_amp'] = True
         return render_template('faucet', **data)
 
     if asset == 'lbtc':
-        amount = 0.01
-        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test':balance_test}
+        amount = 0.001
+        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = False
         data['form_test'] = True
+        data['form_amp'] = True
     elif asset == 'test':
         amount = 0.00005000
-        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test':balance_test}
+        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = False
+        data['form_amp'] = True
+    elif asset == 'amp':
+        amount = 1
+        data = {'result_amp': faucet_amp(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data['form'] = True
+        data['form_test'] = True
+        data['form_amp'] = False 
     return render_template('faucet', **data)
 
 
@@ -451,5 +555,6 @@ def url_about():
 
 
 if __name__ == '__main__':
+    init({})
     app.import_name = '.'
     app.run(host='0.0.0.0', port=8123)

@@ -70,8 +70,31 @@
                    </div>
                 </form>
                 {{/form_test}}
-                <p>You can send back unused coin at the address <b>vjTyPZRBt2WVo8nnFrkQSp4x6xRHt5DVmdtvNaHbMaierD41uz7fk4Jr9V9vgsPHD74WA61Ne67popRQ</b></p>
-            </div>
+                <p>You can send back unused coins at the address <b>vjTyPZRBt2WVo8nnFrkQSp4x6xRHt5DVmdtvNaHbMaierD41uz7fk4Jr9V9vgsPHD74WA61Ne67popRQ</b>.</p>
+            
+	       <h3>Faucet AMP asset</h3>
+               <p> is a Liquid testnet asset registered in the Blockstream AMP platform.</p>
+               <p>Balance: {{balance_amp}}</p>
+               {{^form_amp}}
+               <p>{{result_amp}}</p>
+               {{/form_amp}}
+               {{#form_amp}}
+               <form action="/faucet" method="get">
+                   <div class="form-group row">
+                      <label for="address" class="col-sm-2 col-form-label">GAID</label>
+                      <div class="col-sm-10">
+                         <input type="text" class="form-control" name="address" required="required" id="address" placeholder="GAID">
+                      </div>
+                   </div>
+                   <div class="form-group row">
+                      <div class="col-sm-10">
+                         <button type="submit" class="btn btn-danger" name="action" value="amp">Send assets</button>
+                      </div>
+                   </div>
+                </form>
+                {{/form_amp}}
+                <p>You can send back unused AMP assets at the address <b>vjTvPHdcJFZrYL9LmFpPootd1tmWqzugF9MXwhet6cdeCKEK6WJrb2mPEQGw7WNpikAoTq9ui22GU2pS</b>.</p>
+	    </div>
          </div>
       </div>
       </div>

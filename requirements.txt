@@ -18,3 +18,4 @@ six==1.15.0
 urllib3==1.26.5
 wallycore==0.8.4
 Werkzeug==2.0.2
+https://github.com/Blockstream/gdk/releases/download/release_0.0.48/greenaddress-0.0.48-cp37-cp37m-linux_x86_64.whl
