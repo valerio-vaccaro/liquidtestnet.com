@@ -35,7 +35,6 @@
                {{/form}}
                {{#form}}
                <form action="/faucet" method="get">
-                   <input type="hidden" id="command" name="command" value="faucet">
                    <div class="form-group row">
                       <label for="address" class="col-sm-2 col-form-label">Address</label>
                       <div class="col-sm-10">
@@ -44,11 +43,33 @@
                    </div>
                    <div class="form-group row">
                       <div class="col-sm-10">
-                         <button type="submit" class="btn btn-danger" name="action" value="send">Send assets</button>
+                         <button type="submit" class="btn btn-danger" name="action" value="lbtc">Send assets</button>
                       </div>
                    </div>
                 </form>
                 {{/form}}
+
+	       <h3>Faucet TEST asset</h3>
+	       <p>TEST (asset id 38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5) is a Liquid testnet asset registered in the Blockstream assset registry.</p> 
+               <p>Balance: {{balance_test}}</p>
+               {{^form_test}}
+               <p>{{result_test}}</p>
+               {{/form_test}}
+               {{#form_test}}
+               <form action="/faucet" method="get">
+                   <div class="form-group row">
+                      <label for="address" class="col-sm-2 col-form-label">Address</label>
+                      <div class="col-sm-10">
+                         <input type="text" class="form-control" name="address" required="required" id="address" placeholder="address">
+                      </div>
+                   </div>
+                   <div class="form-group row">
+                      <div class="col-sm-10">
+                         <button type="submit" class="btn btn-danger" name="action" value="test">Send assets</button>
+                      </div>
+                   </div>
+                </form>
+                {{/form_test}}
                 <p>You can send back unused coin at the address <b>vjTyPZRBt2WVo8nnFrkQSp4x6xRHt5DVmdtvNaHbMaierD41uz7fk4Jr9V9vgsPHD74WA61Ne67popRQ</b></p>
             </div>
          </div>

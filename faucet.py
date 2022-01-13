@@ -2,6 +2,7 @@ from flask import (
     Flask,
     request,
     jsonify,
+    send_from_directory,
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_ipaddr
@@ -42,6 +43,10 @@ host = RPCHost(serverURL)
 if (len(rpcPassphrase) > 0):
     result = host.call('walletpassphrase', rpcPassphrase, 60)
 
+@app.route('/.well-known/<path:filename>')
+def wellKnownRoute(filename):
+    print(app.root_path + '/well-known/' + filename)
+    return send_from_directory(app.root_path + '/well-known/', filename, conditional=True)
 
 def stats():
     info = host.call('getblockchaininfo')
@@ -194,38 +199,61 @@ def faucet(address, amount):
         data = "Error"
     return data
 
+def faucet_test(address, amount):
+    if host.call('validateaddress', address)['isvalid']:
+        tx = host.call('sendtoaddress', address, amount, '', '', False, False, 6, 'economical', False, '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5')
+        data = "Sent " + str(amount) + " TEST to address " + address + " with transaction " + tx + "."
+    else:
+        data = "Error"
+    return data
 
 @app.route('/api/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
     balance = host.call('getbalance')['bitcoin']
+    balance_test = host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
     address = request.args.get('address')
+    asset = request.args.get('action')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if address is None:
-        data = {'result': 'missing address', 'balance': balance}
+        data = {'result': 'missing address', 'balance': balance, 'balance_test':balance_test}
         return jsonify(data)
 
-    amount = 0.001
-    data = {'result': faucet(address, amount), 'balance': balance}
+    if asset == 'lbtc':
+        amount = 0.001
+        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test':balance_test}
+    elif asset == 'test':
+        amount = 0.1
+        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test':balance_test}
     return jsonify(data)
-
 
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
     balance = host.call('getbalance')['bitcoin']
+    balance_test = host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
     address = request.args.get('address')
+    asset = request.args.get('action')
+    print(asset)
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if address is None:
-        data = {'result': 'missing address', 'balance': balance}
+        data = {'result': 'missing address', 'balance': balance, 'balance_test':balance_test}
         data['form'] = True
+        data['form_test'] = True
         return render_template('faucet', **data)
 
-    amount = 0.1
-    data = {'result': faucet(address, amount), 'balance': balance}
-    data['form'] = False
+    if asset == 'lbtc':
+        amount = 0.01
+        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test':balance_test}
+        data['form'] = False
+        data['form_test'] = True
+    elif asset == 'test':
+        amount = 0.00005000
+        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test':balance_test}
+        data['form'] = True
+        data['form_test'] = False
     return render_template('faucet', **data)
 
 
@@ -245,7 +273,7 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     # Create the contact and calculate the asset id (Needed for asset registry!)
     contract = json.dumps({'name': name,
                            'ticker': ticker,
-                           'precision': precision,
+                           'precision': int(precision),
                            'entity': {'domain': domain},
                            'issuer_pubkey': issuer_pubkey,
                            'version': version}, separators=(',', ':'), sort_keys=True)
@@ -274,8 +302,7 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     if test[0]['allowed'] is True:
         txid = host.call('sendrawtransaction', signed['hex'])
         data['txid'] = txid
-        data['registry'] = {'asset_id': data['asset_id'],
-                            'contract': json.loads(data['contract'])}
+        data['registry'] = json.dumps({'asset_id': data['asset_id'], 'contract': json.loads(data['contract'])})
 
     return data
 
