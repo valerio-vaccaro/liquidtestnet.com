@@ -324,8 +324,10 @@ def url_faucet():
                     pass
                 subaccount = sub['pointer']
                 break
+        result = requests.get(f'{ampUrl}assets/{ampUuid}', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
+        assetid = result['asset_id']
         balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
-    except:
+    except Exception as e:
         pass
     balance = host.call('getbalance')['bitcoin']
     balance_test = host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
