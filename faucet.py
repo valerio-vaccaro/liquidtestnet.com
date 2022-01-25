@@ -218,19 +218,7 @@ def faucet_test(address, amount):
     return data
 
 def faucet_amp(gaid, amount):
-    s = Session({"name":"testnet-liquid", "log_level":"info"})
-    s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
-    s.change_settings({"unit":"sats"}).resolve()
-    subaccount = -1
-
-    subaccounts = s.get_subaccounts().resolve()
-    for sub in subaccounts['subaccounts']:
-        if sub['name'] == gdkSubaccount:
-            if sub['type'] != '2of2_no_recovery':
-                print('Wrong subaccount type')
-                return 'Wrong subaccount type'
-            subaccount = sub['pointer']
-            break
+    global s, subaccount
 
     if subaccount == -1:
         print('Missing subaccount')
@@ -244,6 +232,7 @@ def faucet_amp(gaid, amount):
         return 'Invalid GAID'
 
     result = requests.get(f'{ampUrl}gaids/{gaid}/address', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
+    print(result)
     if result['error'] == '' :
         address = result['address']
     else:
@@ -271,18 +260,8 @@ def faucet_amp(gaid, amount):
 @limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
     balance_amp = 0
+    global s, subaccount
     try:
-        s = Session({"name":"testnet-liquid", "log_level":"info"})
-        s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
-        s.change_settings({"unit":"sats"}).resolve()
-        subaccount = -1
-        subaccounts = s.get_subaccounts().resolve()
-        for sub in subaccounts['subaccounts']:
-            if sub['name'] == gdkSubaccount:
-                if sub['type'] != '2of2_no_recovery':
-                    pass
-                subaccount = sub['pointer']
-                break
         balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
     except:
         pass
@@ -312,18 +291,8 @@ def api_faucet():
 @limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
     balance_amp = 0
+    global s, subaccount
     try:
-        s = Session({"name":"testnet-liquid", "log_level":"info"})
-        s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
-        s.change_settings({"unit":"sats"}).resolve()
-        subaccount = -1
-        subaccounts = s.get_subaccounts().resolve()
-        for sub in subaccounts['subaccounts']:
-            if sub['name'] == gdkSubaccount:
-                if sub['type'] != '2of2_no_recovery':
-                    pass
-                subaccount = sub['pointer']
-                break
         result = requests.get(f'{ampUrl}assets/{ampUuid}', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
         assetid = result['asset_id']
         balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
@@ -558,5 +527,18 @@ def url_about():
 
 if __name__ == '__main__':
     init({})
+
+    s = Session({"name":"testnet-liquid", "log_level":"info"})
+    s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
+    s.change_settings({"unit":"sats"}).resolve()
+    subaccount = -1
+    subaccounts = s.get_subaccounts().resolve()
+    for sub in subaccounts['subaccounts']:
+        if sub['name'] == gdkSubaccount:
+            if sub['type'] != '2of2_no_recovery':
+                pass
+            subaccount = sub['pointer']
+            break
+
     app.import_name = '.'
     app.run(host='0.0.0.0', port=8123)
