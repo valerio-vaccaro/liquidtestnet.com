@@ -10,7 +10,7 @@ itsdangerous==1.1.0
 Jinja2==2.11.3
 limits==2.0.3
 MarkupSafe==1.1.1
-Pillow==9.0.0
+Pillow==9.0.1
 pystache==0.5.4
 qrcode==6.1
 requests==2.25.1
