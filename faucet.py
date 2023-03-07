@@ -232,7 +232,7 @@ def faucet_amp(gaid, amount):
         return 'Invalid GAID'
 
     result = requests.get(f'{ampUrl}gaids/{gaid}/address', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
-    print(result)
+
     if result['error'] == '' :
         address = result['address']
     else:
@@ -295,7 +295,8 @@ def url_faucet():
     try:
         result = requests.get(f'{ampUrl}assets/{ampUuid}', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
         assetid = result['asset_id']
-        balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
+        #balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
+        balance_amp = 0
     except Exception as e:
         pass
     balance = host.call('getbalance')['bitcoin']
