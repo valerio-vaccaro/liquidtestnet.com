@@ -5,7 +5,7 @@ from flask import (
     send_from_directory,
 )
 from flask_limiter import Limiter
-from flask_limiter.util import get_ipaddr
+from flask_limiter.util import get_remote_address
 from flask_stache import render_template
 from flask_qrcode import QRcode
 from bitcoin_rpc_class import RPCHost
@@ -19,9 +19,10 @@ from greenaddress import init, Session
 
 app = Flask(__name__, static_url_path='/static')
 limiter = Limiter(
-    app,
-    key_func=get_ipaddr,
-    default_limits=["200 per day", "50 per hour"]
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
 )
 qrcode = QRcode(app)
 
@@ -290,7 +291,7 @@ def api_faucet():
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
-    balance_amp = 0
+    balance_amp = '?'
     global s, subaccount
     try:
         result = requests.get(f'{ampUrl}assets/{ampUuid}', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
