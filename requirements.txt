@@ -17,5 +17,5 @@ requests==2.28.2
 six==1.16.0
 urllib3==1.26.14
 wallycore==0.8.8
-Werkzeug==2.2.3
+Werkzeug==3.0.3
 https://github.com/Blockstream/gdk/releases/download/release_0.0.50/greenaddress-0.0.50-cp39-cp39-linux_x86_64.whl
