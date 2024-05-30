@@ -56,6 +56,10 @@ if (len(rpcPassphrase) > 0):
 
 @app.route('/.well-known/<path:filename>')
 def wellKnownRoute(filename):
+    assetid = filename[19:]
+    data = "Authorize linking the domain name liquidtestnet.com to the Liquid asset " + assetid
+    return data
+
     print(app.root_path + '/well-known/' + filename)
     return send_from_directory(app.root_path + '/well-known/', filename, conditional=True)
 

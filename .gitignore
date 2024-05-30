@@ -136,3 +136,4 @@ chain/*
 elements-*
 elements
 *.conf
+elements_testnet.conf
