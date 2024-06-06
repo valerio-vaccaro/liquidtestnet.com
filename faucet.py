@@ -231,7 +231,7 @@ def faucet_test(address, amount):
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
         builder = network.tx_builder()
-        builder.add_lbtc_recipient(Address(address), amount)
+        builder.add_recipient(Address(address), amount, "38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5")
         unsigned_pset = builder.finish(wollet)
         signed_pset = signer.sign(unsigned_pset)
 
@@ -283,7 +283,8 @@ def api_faucet():
 
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
-def balance_amp = 0
+def url_faucet():
+    balance_amp = 0
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(
         '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
@@ -327,14 +328,14 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     data = {}
     version = 0  # don't change
     blind = False
-    
+
     asset_amount = int(asset_amount) / 10 ** (8 - int(precision))
-    
+
     data['contract'] = "{}"
     data['asset_id'] = ""
     data['txid'] = ""
-     data['registry'] = json.dumps(
-            {'asset_id': data['asset_id'], 'contract': json.loads(data['contract'])})
+    data['registry'] = json.dumps(
+        {'asset_id': data['asset_id'], 'contract': json.loads(data['contract'])})
 
     return data
 
