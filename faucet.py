@@ -14,7 +14,7 @@ import configparser
 import json
 import requests
 import wallycore as wally
-from greenaddress import init, Session
+from lwk import *
 
 
 app = Flask(__name__, static_url_path='/static')
@@ -38,21 +38,23 @@ rpcPassword = config.get(liquid_instance, 'password')
 rpcPassphrase = config.get(liquid_instance, 'passphrase')
 rpcWallet = config.get(liquid_instance, 'wallet')
 
-ampUrl =  config.get('AMP', 'url')
-ampToken =  config.get('AMP', 'token')
+ampUrl = config.get('AMP', 'url')
+ampToken = config.get('AMP', 'token')
 ampUuid = config.get('AMP', 'assetuuid')
 
-gdkMnemonic = config.get('GDK', 'mnemonic')
-gdkSubaccount = config.get('GDK', 'subaccount')
+lwkMnemonic = config.get('LWK', 'mnemonic')
 
 if (len(rpcWallet) > 0):
-    serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + rpcHost + ':' + str(rpcPort) + '/wallet/' + rpcWallet
+    serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + \
+        rpcHost + ':' + str(rpcPort) + '/wallet/' + rpcWallet
 else:
-    serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + rpcHost + ':' + str(rpcPort)
+    serverURL = 'http://' + rpcUser + ':' + \
+        rpcPassword + '@' + rpcHost + ':' + str(rpcPort)
 
 host = RPCHost(serverURL)
 if (len(rpcPassphrase) > 0):
     result = host.call('walletpassphrase', rpcPassphrase, 60)
+
 
 @app.route('/.well-known/<path:filename>')
 def wellKnownRoute(filename):
@@ -62,6 +64,7 @@ def wellKnownRoute(filename):
 
     print(app.root_path + '/well-known/' + filename)
     return send_from_directory(app.root_path + '/well-known/', filename, conditional=True)
+
 
 def stats():
     info = host.call('getblockchaininfo')
@@ -96,7 +99,8 @@ def explorer(start, last):
     for i in range(start, last, -1):
         hash = host.call('getblockhash', i)
         block = host.call('getblock', hash)
-        data.append({'id': i, 'hash': hash, 'size': block['size'], 'time': block['time'], 'nTx': block['nTx']})
+        data.append({'id': i, 'hash': hash,
+                    'size': block['size'], 'time': block['time'], 'nTx': block['nTx']})
 
     return data
 
@@ -143,7 +147,8 @@ def url_explorer():
     if (last < 0):
         last = 0
 
-    data = {'blocks_list': explorer(start, last), 'prev': start - elements, 'next': start + elements}
+    data = {'blocks_list': explorer(
+        start, last), 'prev': start - elements, 'next': start + elements}
     return render_template('explorer', **data)
 
 
@@ -172,7 +177,8 @@ def api_block():
 def url_block():
     height = request.args.get('height')
     res_block = block(height)
-    data = {'block': height, 'result': json.dumps(res_block, indent=4, sort_keys=True), 'transaction_list': res_block['tx']}
+    data = {'block': height, 'result': json.dumps(
+        res_block, indent=4, sort_keys=True), 'transaction_list': res_block['tx']}
     return render_template('block', **data)
 
 
@@ -202,62 +208,42 @@ def api_transaction():
 @limiter.exempt
 def url_transaction():
     txid = request.args.get('txid')
-    data = {'txid': txid, 'result': json.dumps(transaction(txid), indent=4, sort_keys=True)}
+    data = {'txid': txid, 'result': json.dumps(
+        transaction(txid), indent=4, sort_keys=True)}
     return render_template('transaction', **data)
 
 
 def faucet(address, amount):
     if host.call('validateaddress', address)['isvalid']:
-        tx = host.call('sendtoaddress', address, amount)
-        data = "Sent " + str(amount) + " LBTC to address " + address + " with transaction " + tx + "."
+        # Call LWK
+        builder = network.tx_builder()
+        builder.add_lbtc_recipient(Address(address), amount)
+        unsigned_pset = builder.finish(wollet)
+        signed_pset = signer.sign(unsigned_pset)
+
+        finalized_pset = wollet.finalize(signed_pset)
+        tx = finalized_pset.extract_tx()
+        txid = client.broadcast(tx)
+        data = "Sent " + str(amount) + " LBTC to address " + \
+            address + " with transaction " + str(txid) + "."
     else:
         data = "Error"
     return data
+
 
 def faucet_test(address, amount):
     if host.call('validateaddress', address)['isvalid']:
-        tx = host.call('sendtoaddress', address, amount, '', '', False, False, 6, 'economical', False, '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5')
-        data = "Sent " + str(amount) + " TEST to address " + address + " with transaction " + tx + "."
+        # tx = host.call('sendtoaddress', address, amount, '', '', False, False, 6, 'economical', False, '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5')
+        # Call LWK
+        data = "Sent " + str(amount) + " TEST to address " + \
+            address + " with transaction " + tx + "."
     else:
         data = "Error"
     return data
 
+
 def faucet_amp(gaid, amount):
-    global s, subaccount
-
-    if subaccount == -1:
-        print('Missing subaccount')
-        return 'Missing subaccount'
-
-    result = requests.get(f'{ampUrl}assets/{ampUuid}', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
-    assetid = result['asset_id']
-
-    result = requests.get(f'{ampUrl}gaids/{gaid}/validate', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
-    if not result['is_valid']:
-        return 'Invalid GAID'
-
-    result = requests.get(f'{ampUrl}gaids/{gaid}/address', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
-
-    if result['error'] == '' :
-        address = result['address']
-    else:
-        return 'Error in fetching address'
-
-    tx = {
-        'subaccount': subaccount,
-        'addressees': [{'satoshi': amount, 'address': address, 'asset_id': assetid}],
-    }
-
-    utxo_details = {'subaccount': subaccount, 'num_confs': 0}
-    utxos = s.get_unspent_outputs(json.dumps(utxo_details)).resolve()
-    tx['utxos'] = utxos['unspent_outputs']
-    txc = s.create_transaction(json.dumps(tx)).resolve()
-
-    txg = s.sign_transaction(txc).resolve()
-    txs = s.send_transaction(txg).resolve()
-    print('Transaction sent!')
-    print('txhash: {}'.format(txs["txhash"]))
-    data = "Sent " + str(amount) + " AMP to address " + address + " with transaction " + txs["txhash"] + "."
+    data = "TBD"
     return data
 
 
@@ -265,53 +251,47 @@ def faucet_amp(gaid, amount):
 @limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
     balance_amp = 0
-    global s, subaccount
-    try:
-        balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
-    except:
-        pass
-    
-    balance = host.call('getbalance')['bitcoin']
-    balance_test = host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
+    balance = wollet.balance().get(network.policy_asset(), 0)
+    balance_test = wollet.balance().get(
+        '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
     address = request.args.get('address')
     asset = request.args.get('action')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if address is None:
-        data = {'result': 'missing address', 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data = {'result': 'missing address', 'balance': balance,
+                'balance_test': balance_test, 'balance_amp': balance_amp}
         return jsonify(data)
 
     if asset == 'lbtc':
-        amount = 0.001
-        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        amount = 100000
+        data = {'result': faucet(address, amount), 'balance': balance,
+                'balance_test': balance_test, 'balance_amp': balance_amp}
     elif asset == 'test':
-        amount = 0.00005000
-        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        amount = 5000
+        data = {'result_test': faucet_test(
+            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
     elif asset == 'amp':
         amount = 1
-        data = {'result_amp': faucet_amp(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data = {'result_amp': faucet_amp(
+            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
     return jsonify(data)
+
 
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
-    balance_amp = '?'
-    global s, subaccount
-    try:
-        result = requests.get(f'{ampUrl}assets/{ampUuid}', headers={'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
-        assetid = result['asset_id']
-        #balance_amp = s.get_balance({'subaccount': subaccount, 'num_confs': 0}).resolve()[assetid]
-        balance_amp = 0
-    except Exception as e:
-        pass
-    balance = host.call('getbalance')['bitcoin']
-    balance_test = host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
+    balance_amp = 0
+    balance = 0  # host.call('getbalance')['bitcoin']
+    # host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
+    balance_test = 0
     address = request.args.get('address')
     asset = request.args.get('action')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     if address is None:
-        data = {'result': 'missing address', 'balance': balance, 'balance_test':balance_test, 'balance_amp': balance_amp}
+        data = {'result': 'missing address', 'balance': balance,
+                'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = True
         data['form_amp'] = True
@@ -319,22 +299,25 @@ def url_faucet():
 
     if asset == 'lbtc':
         amount = 0.001
-        data = {'result': faucet(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data = {'result': faucet(address, amount), 'balance': balance,
+                'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = False
         data['form_test'] = True
         data['form_amp'] = True
     elif asset == 'test':
         amount = 0.00005000
-        data = {'result_test': faucet_test(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data = {'result_test': faucet_test(
+            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = False
         data['form_amp'] = True
     elif asset == 'amp':
         amount = 1
-        data = {'result_amp': faucet_amp(address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data = {'result_amp': faucet_amp(
+            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = True
-        data['form_amp'] = False 
+        data['form_amp'] = False
     return render_template('faucet', **data)
 
 
@@ -358,11 +341,13 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
                            'entity': {'domain': domain},
                            'issuer_pubkey': issuer_pubkey,
                            'version': version}, separators=(',', ':'), sort_keys=True)
-    contract_hash = wally.hex_from_bytes(wally.sha256(contract.encode('ascii')))
+    contract_hash = wally.hex_from_bytes(
+        wally.sha256(contract.encode('ascii')))
     data['contract'] = contract
 
     # Create the rawissuance transaction
-    contract_hash_rev = wally.hex_from_bytes(wally.hex_to_bytes(contract_hash)[::-1])
+    contract_hash_rev = wally.hex_from_bytes(
+        wally.hex_to_bytes(contract_hash)[::-1])
     rawissue = host.call('rawissueasset', funded['hex'], [{'asset_amount': asset_amount,
                                                            'asset_address': asset_address,
                                                            'token_amount': token_amount,
@@ -371,7 +356,8 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
                                                            'contract_hash': contract_hash_rev}])
 
     # Blind the transaction
-    blind = host.call('blindrawtransaction', rawissue[0]['hex'], True, [], False)
+    blind = host.call('blindrawtransaction',
+                      rawissue[0]['hex'], True, [], False)
 
     # Sign transaction
     signed = host.call('signrawtransactionwithwallet', blind)
@@ -383,7 +369,8 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     if test[0]['allowed'] is True:
         txid = host.call('sendrawtransaction', signed['hex'])
         data['txid'] = txid
-        data['registry'] = json.dumps({'asset_id': data['asset_id'], 'contract': json.loads(data['contract'])})
+        data['registry'] = json.dumps(
+            {'asset_id': data['asset_id'], 'contract': json.loads(data['contract'])})
 
     return data
 
@@ -403,7 +390,8 @@ def api_issuer():
         ticker = request.args.get('ticker')
         precision = request.args.get('precision')
         domain = request.args.get('domain')
-        data = issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubkey, name, ticker, precision, domain)
+        data = issuer(asset_amount, asset_address, token_amount,
+                      token_address, issuer_pubkey, name, ticker, precision, domain)
         data['domain'] = domain
         data['name'] = name
     else:
@@ -426,7 +414,8 @@ def url_issuer():
         ticker = request.args.get('ticker')
         precision = request.args.get('precision')
         domain = request.args.get('domain')
-        data = issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubkey, name, ticker, precision, domain)
+        data = issuer(asset_amount, asset_address, token_amount,
+                      token_address, issuer_pubkey, name, ticker, precision, domain)
         data['form'] = False
         data['domain'] = domain
         data['name'] = name
@@ -532,19 +521,16 @@ def url_about():
 
 
 if __name__ == '__main__':
-    init({})
+    mnemonic = Mnemonic(str(lwkMnemonic))
+    network = Network.testnet()
+    client = network.default_electrum_client()
 
-    s = Session({"name":"testnet-liquid", "log_level":"info"})
-    s.login_user({}, {'mnemonic': gdkMnemonic}).resolve()
-    s.change_settings({"unit":"sats"}).resolve()
-    subaccount = -1
-    subaccounts = s.get_subaccounts().resolve()
-    for sub in subaccounts['subaccounts']:
-        if sub['name'] == gdkSubaccount:
-            if sub['type'] != '2of2_no_recovery':
-                pass
-            subaccount = sub['pointer']
-            break
+    signer = Signer(mnemonic, network)
+    desc = signer.wpkh_slip77_descriptor()
+
+    wollet = Wollet(network, desc, datadir=None)
+    update = client.full_scan(wollet)
+    wollet.apply_update(update)
 
     app.import_name = '.'
     app.run(host='0.0.0.0', port=8123)
