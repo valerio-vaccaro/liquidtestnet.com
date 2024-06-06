@@ -2,7 +2,6 @@ from flask import (
     Flask,
     request,
     jsonify,
-    send_from_directory,
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -61,9 +60,6 @@ def wellKnownRoute(filename):
     assetid = filename[19:]
     data = "Authorize linking the domain name liquidtestnet.com to the Liquid asset " + assetid
     return data
-
-    print(app.root_path + '/well-known/' + filename)
-    return send_from_directory(app.root_path + '/well-known/', filename, conditional=True)
 
 
 def stats():
@@ -233,10 +229,17 @@ def faucet(address, amount):
 
 def faucet_test(address, amount):
     if host.call('validateaddress', address)['isvalid']:
-        # tx = host.call('sendtoaddress', address, amount, '', '', False, False, 6, 'economical', False, '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5')
         # Call LWK
+        builder = network.tx_builder()
+        builder.add_lbtc_recipient(Address(address), amount)
+        unsigned_pset = builder.finish(wollet)
+        signed_pset = signer.sign(unsigned_pset)
+
+        finalized_pset = wollet.finalize(signed_pset)
+        tx = finalized_pset.extract_tx()
+        txid = client.broadcast(tx)
         data = "Sent " + str(amount) + " TEST to address " + \
-            address + " with transaction " + tx + "."
+            address + " with transaction " + str(txid) + "."
     else:
         data = "Error"
     return data
@@ -280,11 +283,10 @@ def api_faucet():
 
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
-def url_faucet():
-    balance_amp = 0
-    balance = 0  # host.call('getbalance')['bitcoin']
-    # host.call('getbalance')['38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5'] * 100000
-    balance_test = 0
+def balance_amp = 0
+    balance = wollet.balance().get(network.policy_asset(), 0)
+    balance_test = wollet.balance().get(
+        '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
     address = request.args.get('address')
     asset = request.args.get('action')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -298,14 +300,14 @@ def url_faucet():
         return render_template('faucet', **data)
 
     if asset == 'lbtc':
-        amount = 0.001
+        amount = 100000
         data = {'result': faucet(address, amount), 'balance': balance,
                 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = False
         data['form_test'] = True
         data['form_amp'] = True
     elif asset == 'test':
-        amount = 0.00005000
+        amount = 5000
         data = {'result_test': faucet_test(
             address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
@@ -325,51 +327,13 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     data = {}
     version = 0  # don't change
     blind = False
-    feerate = 0.00003000
-
+    
     asset_amount = int(asset_amount) / 10 ** (8 - int(precision))
-    token_amount = int(token_amount) / 10 ** (8 - int(precision))
-
-    # Create funded base tx
-    base = host.call('createrawtransaction', [], [{'data': '00'}])
-    funded = host.call('fundrawtransaction', base, {'feeRate': feerate})
-
-    # Create the contact and calculate the asset id (Needed for asset registry!)
-    contract = json.dumps({'name': name,
-                           'ticker': ticker,
-                           'precision': int(precision),
-                           'entity': {'domain': domain},
-                           'issuer_pubkey': issuer_pubkey,
-                           'version': version}, separators=(',', ':'), sort_keys=True)
-    contract_hash = wally.hex_from_bytes(
-        wally.sha256(contract.encode('ascii')))
-    data['contract'] = contract
-
-    # Create the rawissuance transaction
-    contract_hash_rev = wally.hex_from_bytes(
-        wally.hex_to_bytes(contract_hash)[::-1])
-    rawissue = host.call('rawissueasset', funded['hex'], [{'asset_amount': asset_amount,
-                                                           'asset_address': asset_address,
-                                                           'token_amount': token_amount,
-                                                           'token_address': token_address,
-                                                           'blind': blind,
-                                                           'contract_hash': contract_hash_rev}])
-
-    # Blind the transaction
-    blind = host.call('blindrawtransaction',
-                      rawissue[0]['hex'], True, [], False)
-
-    # Sign transaction
-    signed = host.call('signrawtransactionwithwallet', blind)
-    decoded = host.call('decoderawtransaction', signed['hex'])
-    data['asset_id'] = decoded['vin'][0]['issuance']['asset']
-
-    # Test transaction
-    test = host.call('testmempoolaccept', [signed['hex']])
-    if test[0]['allowed'] is True:
-        txid = host.call('sendrawtransaction', signed['hex'])
-        data['txid'] = txid
-        data['registry'] = json.dumps(
+    
+    data['contract'] = "{}"
+    data['asset_id'] = ""
+    data['txid'] = ""
+     data['registry'] = json.dumps(
             {'asset_id': data['asset_id'], 'contract': json.loads(data['contract'])})
 
     return data
@@ -426,13 +390,6 @@ def url_issuer():
 
 
 def opreturn(text):
-    base = host.call('createrawtransaction', [], [{'data': text}])
-    funded = host.call('fundrawtransaction', base)
-    blind = host.call('blindrawtransaction', funded['hex'], True, [], False)
-    signed = host.call('signrawtransactionwithwallet', blind)
-    test = host.call('testmempoolaccept', [signed['hex']])
-    if test[0]['allowed'] is True:
-        return host.call('sendrawtransaction', signed['hex'])
     return
 
 
