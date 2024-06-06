@@ -16,9 +16,11 @@
             <div class="navbar-header">
               <a class="navbar-brand" href="/">Home</a>
               <a class="navbar-brand" href="/explorer">Explorer</a>
+              <a class="navbar-brand" href="/mempool">Mempool</a>
               <a class="navbar-brand" href="/faucet">Faucet</a>
               <a class="navbar-brand" href="/issuer">Issuer</a>
               <a class="navbar-brand" href="/utils">Utils</a>
+              <a class="navbar-brand" href="https://liquidwebwallet.org/" target="_blank">Liquid Web Wallet</a>
               <a class="navbar-brand" href="/about">About</a>
             </div>
          </div>
@@ -29,7 +31,7 @@
             <br/><br/>
             <div class="well">
                <h3>Faucet</h3>
-               <p>Balance: {{balance}}</p>
+               <p>Balance: {{balance}} sats.</p>
                {{^form}}
                <p>{{result}}</p>
                {{/form}}
@@ -51,7 +53,7 @@
 
 	       <h3>Faucet TEST asset</h3>
 	       <p>TEST (asset id 38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5) is a Liquid testnet asset registered in the Blockstream assset registry.</p> 
-               <p>Balance: {{balance_test}}</p>
+               <p>Balance: {{balance_test}} sats.</p>
                {{^form_test}}
                <p>{{result_test}}</p>
                {{/form_test}}

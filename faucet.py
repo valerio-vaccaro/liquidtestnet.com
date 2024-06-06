@@ -178,6 +178,27 @@ def url_block():
     return render_template('block', **data)
 
 
+def mempool():
+    data = host.call('getrawmempool')
+    return data
+
+
+@app.route('/api/mempool', methods=['GET'])
+@limiter.exempt
+def api_mempool():
+    data = mempool()
+    return jsonify(data)
+
+
+@app.route('/mempool', methods=['GET'])
+@limiter.exempt
+def url_mempool():
+    height = request.args.get('height')
+    mem = mempool()
+    data = {'transaction_list': mem}
+    return render_template('mempool', **data)
+
+
 def transaction(txid):
     if txid is None:
         return {'error': 'missing txid'}
