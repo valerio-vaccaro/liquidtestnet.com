@@ -233,6 +233,8 @@ def url_transaction():
 def faucet(address, amount):
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
+        update = client.full_scan(wollet)
+        wollet.apply_update(update)
         builder = network.tx_builder()
         builder.add_lbtc_recipient(Address(address), amount)
         unsigned_pset = builder.finish(wollet)
@@ -251,8 +253,11 @@ def faucet(address, amount):
 def faucet_test(address, amount):
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
+        update = client.full_scan(wollet)
+        wollet.apply_update(update)
         builder = network.tx_builder()
-        builder.add_recipient(Address(address), amount, "38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5")
+        builder.add_recipient(Address(
+            address), amount, "38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5")
         unsigned_pset = builder.finish(wollet)
         signed_pset = signer.sign(unsigned_pset)
 
