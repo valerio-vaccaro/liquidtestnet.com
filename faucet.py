@@ -355,11 +355,33 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     version = 0  # don't change
     blind = False
 
-    asset_amount = int(asset_amount) / 10 ** (8 - int(precision))
+    # Convert amount in satoshi
+    asset_amount = int(asset_amount) * 10 ** int(precision)
 
-    data['contract'] = "{}"
-    data['asset_id'] = ""
-    data['txid'] = ""
+    # Call LWK
+    update = client.full_scan(wollet)
+    wollet.apply_update(update)
+
+    contract = Contract(domain=domain, issuer_pubkey=issuer_pubkey,
+                        name=name, precision=int(precision), ticker=ticker, version=version)
+    issued_asset = asset_amount
+    reissuance_tokens = token_amount
+    builder = network.tx_builder()
+    builder.issue_asset(int(issued_asset), Address(asset_address),
+                        int(reissuance_tokens), Address(token_address), contract)
+    unsigned_pset = builder.finish(wollet)
+    signed_pset = signer.sign(unsigned_pset)
+    finalized_pset = wollet.finalize(signed_pset)
+    tx = finalized_pset.extract_tx()
+    txid = client.broadcast(tx)
+
+    asset_id = signed_pset.issuance_asset(0)
+    token_id = signed_pset.issuance_token(0)
+
+    data['contract'] = str(contract)
+    data['asset_id'] = str(asset_id)
+    data['token_id'] = str(token_id)
+    data['txid'] = str(txid)
     data['registry'] = json.dumps(
         {'asset_id': data['asset_id'], 'contract': json.loads(data['contract'])})
 
