@@ -12,6 +12,7 @@ import os
 import configparser
 import json
 import requests
+import subprocess
 import wallycore as wally
 from lwk import *
 
@@ -279,7 +280,7 @@ def faucet_amp(gaid, amount):
 @app.route('/api/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
-    balance_amp = 0
+    balance_amp = subprocess.run(["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(
         '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
@@ -310,7 +311,7 @@ def api_faucet():
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
-    balance_amp = 0
+    balance_amp = subprocess.run(["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(
         '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
