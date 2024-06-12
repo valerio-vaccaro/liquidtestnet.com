@@ -273,14 +273,28 @@ def faucet_test(address, amount):
 
 
 def faucet_amp(gaid, amount):
-    data = "TBD"
+    result = requests.get(f'{ampUrl}gaids/{gaid}/validate', headers={
+                          'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
+    if not result['is_valid']:
+        return 'Invalid GAID'
+    result = requests.get(f'{ampUrl}gaids/{gaid}/address', headers={
+                          'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
+    if result['error'] == '':
+        address = result['address']
+    else:
+        return 'Error in fetching address'
+    res = subprocess.run(["./green_cli/send.sh", address,
+                         "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322", '{:.8f}'.format(amount)], capture_output=True)
+    data = "Sent " + '{:.8f}'.format(amount) + " AMP ASSET to address " + \
+        address + " with transaction " + res.stdout.decode('utf-8') + "."
     return data
 
 
 @app.route('/api/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
-    balance_amp = subprocess.run(["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
+    balance_amp = subprocess.run(
+        ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(
         '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
@@ -311,7 +325,8 @@ def api_faucet():
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
-    balance_amp = subprocess.run(["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
+    balance_amp = subprocess.run(
+        ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(
         '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
@@ -342,7 +357,7 @@ def url_faucet():
         data['form_test'] = False
         data['form_amp'] = True
     elif asset == 'amp':
-        amount = 1
+        amount = 0.00000001
         data = {'result_amp': faucet_amp(
             address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
