@@ -9,5 +9,12 @@ password:
 wallet:
 passphrase:
 
+[AMP]
+url:
+username:
+password:
+token:
+assetuuid:
+
 [LWK]
 mnemonic:
