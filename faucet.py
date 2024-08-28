@@ -98,6 +98,13 @@ def url_home():
     return render_template('home', **data)
 
 
+@app.route('/home_old', methods=['GET'])
+@limiter.exempt
+def url_home_old():
+    data = stats()
+    return render_template('home_old', **data)
+
+
 def explorer(start, last):
     data = []
 
