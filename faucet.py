@@ -43,6 +43,9 @@ ampToken = config.get('AMP', 'token')
 ampUuid = config.get('AMP', 'assetuuid')
 
 lwkMnemonic = config.get('LWK', 'mnemonic')
+lwkAddress = config.get('LWK', 'address')
+
+used_addresses = []
 
 if (len(rpcWallet) > 0):
     serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + \
@@ -55,6 +58,11 @@ host = RPCHost(serverURL)
 if (len(rpcPassphrase) > 0):
     result = host.call('walletpassphrase', rpcPassphrase, 60)
 
+@app.route('/robots.txt')
+def noindex():
+    r = Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
+    r.headers["Content-Type"] = "text/plain; charset=utf-8"
+    return r
 
 @app.route('/.well-known/<path:filename>')
 def wellKnownRoute(filename):
@@ -232,6 +240,8 @@ def url_transaction():
 
 
 def faucet(address, amount):
+    if (address == "tlq1qqtqzkja0rptmvsz5gs0jz47c2x7wjlcmqfj4h8vpu3v6qxe9lc08walamcf8e8s0qlwtzkfyylevz2wknycx75gx2scx9fl67"):
+        return ""     
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
         update = client.full_scan(wollet)
@@ -252,6 +262,8 @@ def faucet(address, amount):
 
 
 def faucet_test(address, amount):
+    if (address == "tlq1qqtqzkja0rptmvsz5gs0jz47c2x7wjlcmqfj4h8vpu3v6qxe9lc08walamcf8e8s0qlwtzkfyylevz2wknycx75gx2scx9fl67"):
+        return ""
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
         update = client.full_scan(wollet)
@@ -291,7 +303,7 @@ def faucet_amp(gaid, amount):
 
 
 @app.route('/api/faucet', methods=['GET'])
-@limiter.limit('1000/day;100/hour;3/minute')
+@limiter.limit('100/day;10/hour;3/minute')
 def api_faucet():
     balance_amp = subprocess.run(
         ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
@@ -306,6 +318,13 @@ def api_faucet():
         data = {'result': 'missing address', 'balance': balance,
                 'balance_test': balance_test, 'balance_amp': balance_amp}
         return jsonify(data)
+
+    if address in used_addresses:
+        data = {'result': 'address reuse', 'balance': balance,
+                'balance_test': balance_test, 'balance_amp': balance_amp}
+        return jsonify(data)
+    else:
+        used_addresses.append(address)
 
     if asset == 'lbtc':
         amount = 100000
@@ -323,7 +342,7 @@ def api_faucet():
 
 
 @app.route('/faucet', methods=['GET'])
-@limiter.limit('1000/day;100/hour;3/minute')
+@limiter.limit('100/day;10/hour;3/minute')
 def url_faucet():
     balance_amp = subprocess.run(
         ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
@@ -341,6 +360,16 @@ def url_faucet():
         data['form_test'] = True
         data['form_amp'] = True
         return render_template('faucet', **data)
+
+    if address in used_addresses:
+        data = {'result': 'address reuse', 'balance': balance,
+                'balance_test': balance_test, 'balance_amp': balance_amp}
+        data['form'] = False
+        data['form_test'] = True
+        data['form_amp'] = True
+        return render_template('faucet', **data)
+    else:
+        used_addresses.append(address)
 
     if asset == 'lbtc':
         amount = 100000
