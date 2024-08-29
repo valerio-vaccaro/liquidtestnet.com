@@ -15,9 +15,12 @@ import requests
 import subprocess
 import wallycore as wally
 from lwk import *
-
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__, static_url_path='/static')
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
 limiter = Limiter(
     get_remote_address,
     app=app,
