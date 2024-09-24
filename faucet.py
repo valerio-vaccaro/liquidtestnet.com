@@ -250,7 +250,7 @@ def url_transaction():
 
 
 def faucet(address, amount):
-    if (address == "tlq1qqtqzkja0rptmvsz5gs0jz47c2x7wjlcmqfj4h8vpu3v6qxe9lc08walamcf8e8s0qlwtzkfyylevz2wknycx75gx2scx9fl67"):
+    if (address == "tlq1qqd0qxdqsag3t63gfzq4xr25fcjvsujun6ycx9jtd9jufarrrwtseyf05kf0qz62u09wpnj064cycfvtlxuz4xj4j48wxpsrs2"):
         return ""     
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
@@ -273,7 +273,7 @@ def faucet(address, amount):
 
 
 def faucet_test(address, amount):
-    if (address == "tlq1qqtqzkja0rptmvsz5gs0jz47c2x7wjlcmqfj4h8vpu3v6qxe9lc08walamcf8e8s0qlwtzkfyylevz2wknycx75gx2scx9fl67"):
+    if (address == "tlq1qqd0qxdqsag3t63gfzq4xr25fcjvsujun6ycx9jtd9jufarrrwtseyf05kf0qz62u09wpnj064cycfvtlxuz4xj4j48wxpsrs2"):
         return ""
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
