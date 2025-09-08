@@ -48,7 +48,7 @@ ampUuid = config.get('AMP', 'assetuuid')
 lwkMnemonic = config.get('LWK', 'mnemonic')
 lwkAddress = config.get('LWK', 'address')
 
-used_addresses = []
+#used_addresses = []
 
 if (len(rpcWallet) > 0):
     serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + \
@@ -252,19 +252,27 @@ def url_transaction():
 def faucet(address, amount):
     if (address == "tlq1qqd0qxdqsag3t63gfzq4xr25fcjvsujun6ycx9jtd9jufarrrwtseyf05kf0qz62u09wpnj064cycfvtlxuz4xj4j48wxpsrs2"):
         return ""     
-    if host.call('validateaddress', address)['isvalid']:
-        # Call LWK
-        update = client.full_scan(wollet)
-        wollet.apply_update(update)
-        builder = network.tx_builder()
-        builder.enable_ct_discount()
-        builder.add_lbtc_recipient(Address(address), amount)
-        unsigned_pset = builder.finish(wollet)
-        signed_pset = signer.sign(unsigned_pset)
+    validate_res = host.call('validateaddress', address)
+    if validate_res['isvalid']:
+        if validate_res['confidential_key'] == '':
+            # Call elements
+            if 'faucet' not in host.call('listwallets'):
+                host.call('loadwallet', 'faucet')
+            txid = host.call('sendtoaddress', address, amount/100000000)
+        else:
+            # Call LWK
+            update = client.full_scan(wollet)
+            wollet.apply_update(update)
+            builder = network.tx_builder()
+            builder.enable_ct_discount()
+            builder.add_lbtc_recipient(Address(address), amount)
+            unsigned_pset = builder.finish(wollet)
+            signed_pset = signer.sign(unsigned_pset)
 
-        finalized_pset = wollet.finalize(signed_pset)
-        tx = finalized_pset.extract_tx()
-        txid = client.broadcast(tx)
+            finalized_pset = wollet.finalize(signed_pset)
+            tx = finalized_pset.extract_tx()
+            txid = client.broadcast(tx)
+
         data = "Sent " + str(amount) + " LBTC to address " + \
             address + " with transaction " + str(txid) + "."
     else:
@@ -317,8 +325,8 @@ def faucet_amp(gaid, amount):
 @app.route('/api/faucet', methods=['GET'])
 @limiter.limit('100/day;10/hour;3/minute')
 def api_faucet():
-    balance_amp = subprocess.run(
-        ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
+    balance_amp = 0 #= subprocess.run(
+    #    ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(
         '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
@@ -331,12 +339,12 @@ def api_faucet():
                 'balance_test': balance_test, 'balance_amp': balance_amp}
         return jsonify(data)
 
-    if address in used_addresses:
-        data = {'result': 'address reuse', 'balance': balance,
-                'balance_test': balance_test, 'balance_amp': balance_amp}
-        return jsonify(data)
-    else:
-        used_addresses.append(address)
+    #if address in used_addresses:
+    #    data = {'result': 'address reuse', 'balance': balance,
+    #            'balance_test': balance_test, 'balance_amp': balance_amp}
+    #    return jsonify(data)
+    #else:
+    #    used_addresses.append(address)
 
     if asset == 'lbtc':
         amount = 100000
@@ -356,8 +364,8 @@ def api_faucet():
 @app.route('/faucet', methods=['GET'])
 @limiter.limit('100/day;10/hour;3/minute')
 def url_faucet():
-    balance_amp = subprocess.run(
-        ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
+    balance_amp = 0 #= subprocess.run(
+    #    ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(
         '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
@@ -373,15 +381,15 @@ def url_faucet():
         data['form_amp'] = True
         return render_template('faucet', **data)
 
-    if address in used_addresses:
-        data = {'result': 'address reuse', 'balance': balance,
-                'balance_test': balance_test, 'balance_amp': balance_amp}
-        data['form'] = False
-        data['form_test'] = True
-        data['form_amp'] = True
-        return render_template('faucet', **data)
-    else:
-        used_addresses.append(address)
+    #if address in used_addresses:
+    #    data = {'result': 'address reuse', 'balance': balance,
+    #            'balance_test': balance_test, 'balance_amp': balance_amp}
+    #    data['form'] = False
+    #    data['form_test'] = True
+    #    data['form_amp'] = True
+    #    return render_template('faucet', **data)
+    #else:
+    #    used_addresses.append(address)
 
     if asset == 'lbtc':
         amount = 100000
@@ -512,7 +520,8 @@ def broadcast(tx):
 
 
 @app.route('/api/utils', methods=['GET'])
-@limiter.limit('1000/day;100/hour;3/minute')
+#@limiter.limit('1000/day;100/hour;3/minute')
+@limiter.exempt
 def api_utils():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
