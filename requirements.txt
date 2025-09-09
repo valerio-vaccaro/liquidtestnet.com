@@ -265,9 +265,9 @@ pypng==0.20220715.0 \
 commonmark==0.9.1 \
     --hash=sha256:452f9dc859be7f06631ddcb328b6919c67984aca654e5fefb3914d54691aed60 \
     --hash=sha256:da2f38c92590f83de410ba1a3cbceafbc74fee9def35f9251ba9a971d6d66fd9
-Pygments==2.6.0 \
-    --hash=sha256:ccfb2441778d5825f5cb3741c91e1c9f79bb459622454fc29cd47356338392c6 \
-    --hash=sha256:d4b5e1c585ec7e5fd4ef3e8584f9b04bdd3d9e2e87e64c2fbcada605cf1b6ca4
+Pygments==2.15.0 \
+    --hash=sha256:77a3299119af881904cd5ecd1ac6a66214b6e9bed1f2db16993b54adede64094 \
+    --hash=sha256:f7e36cffc4c517fbc252861b9a6e4644ca0e5abadf9a113c72d1358ad09b9500
 pyparsing==2.0.2 \
     --hash=sha256:1039385c4702ba1834f1d5d6a832c3acdb499c7a8ffdd460ba6d381df3c30cda \
     --hash=sha256:1584a093537c6f0add04a514b91b55fda93e2331de7e5140f835d7d8662ea291 \
