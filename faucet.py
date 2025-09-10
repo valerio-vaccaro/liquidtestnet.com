@@ -264,7 +264,6 @@ def faucet(address, amount):
             update = client.full_scan(wollet)
             wollet.apply_update(update)
             builder = network.tx_builder()
-            builder.enable_ct_discount()
             builder.add_lbtc_recipient(Address(address), amount)
             unsigned_pset = builder.finish(wollet)
             signed_pset = signer.sign(unsigned_pset)
@@ -288,7 +287,6 @@ def faucet_test(address, amount):
         update = client.full_scan(wollet)
         wollet.apply_update(update)
         builder = network.tx_builder()
-        builder.enable_ct_discount()
         builder.add_recipient(Address(
             address), amount, "38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5")
         unsigned_pset = builder.finish(wollet)
@@ -432,7 +430,6 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     issued_asset = asset_amount
     reissuance_tokens = token_amount
     builder = network.tx_builder()
-    builder.enable_ct_discount()
     builder.issue_asset(int(issued_asset), Address(asset_address),
                         int(reissuance_tokens), Address(token_address), contract)
     unsigned_pset = builder.finish(wollet)
