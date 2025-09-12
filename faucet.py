@@ -593,12 +593,18 @@ def url_about():
 if __name__ == '__main__':
     mnemonic = Mnemonic(str(lwkMnemonic))
     network = Network.testnet()
-    client = network.default_electrum_client()
+    b = EsploraClientBuilder(
+        base_url="https://waterfalls.liquidwebwallet.org/liquidtestnet/api",
+        network=network,
+        waterfalls=True,
+        utxo_only=True,
+    )
+    client = EsploraClient.from_builder(b)
 
     signer = Signer(mnemonic, network)
     desc = signer.wpkh_slip77_descriptor()
 
-    wollet = Wollet(network, desc, datadir=None)
+    wollet = Wollet(network, desc, datadir="./.lwk_data")
     update = client.full_scan(wollet)
     wollet.apply_update(update)
 
