@@ -48,7 +48,7 @@ ampUuid = config.get('AMP', 'assetuuid')
 lwkMnemonic = config.get('LWK', 'mnemonic')
 lwkAddress = config.get('LWK', 'address')
 
-#used_addresses = []
+return_address = ''
 
 if (len(rpcWallet) > 0):
     serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + \
@@ -61,11 +61,13 @@ host = RPCHost(serverURL)
 if (len(rpcPassphrase) > 0):
     result = host.call('walletpassphrase', rpcPassphrase, 60)
 
+
 @app.route('/robots.txt')
 def noindex():
     r = Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
     r.headers["Content-Type"] = "text/plain; charset=utf-8"
     return r
+
 
 @app.route('/.well-known/<path:filename>')
 def wellKnownRoute(filename):
@@ -249,9 +251,7 @@ def url_transaction():
     return render_template('transaction', **data)
 
 
-def faucet(address, amount):
-    if (address == "tlq1qqd0qxdqsag3t63gfzq4xr25fcjvsujun6ycx9jtd9jufarrrwtseyf05kf0qz62u09wpnj064cycfvtlxuz4xj4j48wxpsrs2"):
-        return ""     
+def faucet(address, amount): 
     validate_res = host.call('validateaddress', address)
     if validate_res['isvalid']:
         if validate_res['confidential_key'] == '':
@@ -280,8 +280,6 @@ def faucet(address, amount):
 
 
 def faucet_test(address, amount):
-    if (address == "tlq1qqd0qxdqsag3t63gfzq4xr25fcjvsujun6ycx9jtd9jufarrrwtseyf05kf0qz62u09wpnj064cycfvtlxuz4xj4j48wxpsrs2"):
-        return ""
     if host.call('validateaddress', address)['isvalid']:
         # Call LWK
         update = client.full_scan(wollet)
@@ -337,13 +335,6 @@ def api_faucet():
                 'balance_test': balance_test, 'balance_amp': balance_amp}
         return jsonify(data)
 
-    #if address in used_addresses:
-    #    data = {'result': 'address reuse', 'balance': balance,
-    #            'balance_test': balance_test, 'balance_amp': balance_amp}
-    #    return jsonify(data)
-    #else:
-    #    used_addresses.append(address)
-
     if asset == 'lbtc':
         amount = 100000
         data = {'result': faucet(address, amount), 'balance': balance,
@@ -377,17 +368,8 @@ def url_faucet():
         data['form'] = True
         data['form_test'] = True
         data['form_amp'] = True
+        data['return_address'] = return_address
         return render_template('faucet', **data)
-
-    #if address in used_addresses:
-    #    data = {'result': 'address reuse', 'balance': balance,
-    #            'balance_test': balance_test, 'balance_amp': balance_amp}
-    #    data['form'] = False
-    #    data['form_test'] = True
-    #    data['form_amp'] = True
-    #    return render_template('faucet', **data)
-    #else:
-    #    used_addresses.append(address)
 
     if asset == 'lbtc':
         amount = 100000
@@ -410,6 +392,7 @@ def url_faucet():
         data['form'] = True
         data['form_test'] = True
         data['form_amp'] = False
+    data['return_address'] = return_address
     return render_template('faucet', **data)
 
 
@@ -607,6 +590,8 @@ if __name__ == '__main__':
     wollet = Wollet(network, desc, datadir="./.lwk_data")
     update = client.full_scan(wollet)
     wollet.apply_update(update)
+
+    return_address = str(wollet.address(1).address())
 
     app.import_name = '.'
     app.run(host='0.0.0.0', port=8123)
