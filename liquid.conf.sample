@@ -16,5 +16,15 @@ password:
 token:
 assetuuid:
 
+[GDK]
+mnemonic:
+subaccount:
+address:
+amp0_user:
+amp0_password:
+amp0_assetid:
+
 [LWK]
 mnemonic:
+address:
+assetid:
