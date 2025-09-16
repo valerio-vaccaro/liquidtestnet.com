@@ -92,22 +92,78 @@ Create a `liquid.conf` file with the following structure:
 liquid_instance: LIQUID
 
 [LIQUID]
-host: localhost
-port: 7041
-username: your_rpc_username
-password: your_rpc_password
-wallet: your_wallet_name
-passphrase: your_wallet_passphrase
+host:
+port:
+username:
+password:
+wallet:
+passphrase:
 
 [AMP]
-url: https://your-amp-server.com
-token: your_amp_token
-assetuuid: your_asset_uuid
+url:
+username:
+password:
+token:
+assetuuid:
+
+[GDK]
+mnemonic:
+subaccount:
+address:
+amp0_user:
+amp0_password:
+amp0_assetid:
 
 [LWK]
-mnemonic: your_lwk_mnemonic_phrase
-address: your_lwk_address
+mnemonic:
+address:
+assetid:
 ```
+
+### Configuration Sections
+
+| Section | Description | Required | Purpose |
+|---------|-------------|----------|---------|
+| `GENERAL` | Basic application settings | ✅ | Defines which Liquid instance to use |
+| `LIQUID` | Elements node RPC configuration | ✅ | Connection to Liquid testnet node |
+| `AMP` | Asset Management Protocol settings | ✅ | For AMP token distribution |
+| `GDK` | Green Development Kit (AMP0) settings | ✅ | For AMP0 wallet integration |
+| `LWK` | Liquid Wallet Kit configuration | ✅ | Core LWK wallet and asset settings |
+
+### 🔧 **Configuration Details**
+
+#### All Sections Are Required
+
+**GENERAL Section:**
+- `liquid_instance`: Must match one of the configured sections (e.g., "LIQUID")
+
+**LIQUID Section:**
+- `host`: Elements node hostname
+- `port`: Elements node RPC port (typically 7041 for testnet)
+- `username`: RPC username
+- `password`: RPC password
+- `wallet`: Wallet name (can be empty for default wallet)
+- `passphrase`: Wallet passphrase (can be empty if no passphrase)
+
+**AMP Section (for AMP token support):**
+- `url`: AMP server URL
+- `username`: AMP server username
+- `password`: AMP server password
+- `token`: AMP authentication token
+- `assetuuid`: AMP asset UUID
+
+**GDK Section (for AMP0 integration):**
+- `mnemonic`: AMP0 mnemonic phrase
+- `subaccount`: AMP0 subaccount identifier
+- `address`: AMP0 wallet address
+- `amp0_user`: AMP0 username
+- `amp0_password`: AMP0 password
+- `amp0_assetid`: AMP0 asset ID
+
+**LWK Section:**
+- `mnemonic`: 24-word mnemonic phrase for LWK wallet
+- `address`: LWK wallet address
+- `assetid`: Asset ID for test token distribution
 
 ### 🎯 **Simplified Token Issuance**
 
