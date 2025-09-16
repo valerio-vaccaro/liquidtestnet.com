@@ -52,7 +52,7 @@
                 {{/form}}
 
 	       <h3>Faucet TEST asset</h3>
-	       <p>TEST (asset id 38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5) is a Liquid testnet asset registered in the Blockstream assset registry.</p> 
+	       <p>TEST (asset id {{assetid}}) is a Liquid testnet asset registered in the Blockstream assset registry.</p> 
                <p>Balance: {{balance_test}} sats.</p>
                {{^form_test}}
                <p>{{result_test}}</p>
@@ -75,7 +75,7 @@
 		<p>You can send back unused coins at the address <b>{{return_address}}</b>.</p>
             
 	       <h3>Faucet AMP asset</h3>
-               <p> bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322 is a Liquid testnet asset registered in the Blockstream AMP platform.</p>
+	       <p>{{amp0_assetid}} is a Liquid testnet asset registered in the Blockstream AMP platform.</p>
 	       <p>Balance: {{balance_amp}}</p>
 	       {{^form_amp}}
                <p>{{result_amp}}</p>
@@ -95,7 +95,7 @@
                    </div>
                 </form>
                 {{/form_amp}}
-                <p>You can send back unused AMP assets at the address <b>vjTvPHdcJFZrYL9LmFpPootd1tmWqzugF9MXwhet6cdeCKEK6WJrb2mPEQGw7WNpikAoTq9ui22GU2pS</b>.</p>
+		<p>You can send back unused AMP assets at the address <b>{{amp0_return_address}}</b>.</p>
 	    </div>
          </div>
       </div>

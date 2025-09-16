@@ -45,10 +45,14 @@ ampUrl = config.get('AMP', 'url')
 ampToken = config.get('AMP', 'token')
 ampUuid = config.get('AMP', 'assetuuid')
 
+amp0_user = config.get('GDK', 'amp0_user')
+amp0_password = config.get('GDK', 'amp0_password')
+amp0_assetid = config.get('GDK', 'amp0_assetid')
+amp0_mnemonic = config.get('GDK', 'mnemonic')
+
 lwkMnemonic = config.get('LWK', 'mnemonic')
 lwkAddress = config.get('LWK', 'address')
-
-return_address = ''
+assetid = config.get('LWK', 'assetid')
 
 if (len(rpcWallet) > 0):
     serverURL = 'http://' + rpcUser + ':' + rpcPassword + '@' + \
@@ -251,49 +255,24 @@ def url_transaction():
     return render_template('transaction', **data)
 
 
-def faucet(address, amount): 
+def faucet_asset(address, amount, asset):
     validate_res = host.call('validateaddress', address)
     if validate_res['isvalid']:
-        if validate_res['confidential_key'] == '':
-            # Call elements
-            if 'faucet' not in host.call('listwallets'):
-                host.call('loadwallet', 'faucet')
-            txid = host.call('sendtoaddress', address, amount/100000000)
-        else:
-            # Call LWK
-            update = client.full_scan(wollet)
-            wollet.apply_update(update)
-            builder = network.tx_builder()
-            builder.add_lbtc_recipient(Address(address), amount)
-            unsigned_pset = builder.finish(wollet)
-            signed_pset = signer.sign(unsigned_pset)
-
-            finalized_pset = wollet.finalize(signed_pset)
-            tx = finalized_pset.extract_tx()
-            txid = client.broadcast(tx)
-
-        data = "Sent " + str(amount) + " LBTC to address " + \
-            address + " with transaction " + str(txid) + "."
-    else:
-        data = "Error"
-    return data
-
-
-def faucet_test(address, amount):
-    if host.call('validateaddress', address)['isvalid']:
         # Call LWK
         update = client.full_scan(wollet)
         wollet.apply_update(update)
         builder = network.tx_builder()
-        builder.add_recipient(Address(
-            address), amount, "38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5")
+        if validate_res['confidential_key'] == '':
+            builder.add_explicit_recipient(Address(address), amount, asset)
+        else:
+            builder.add_recipient(Address(address), amount, asset)
         unsigned_pset = builder.finish(wollet)
         signed_pset = signer.sign(unsigned_pset)
 
         finalized_pset = wollet.finalize(signed_pset)
         tx = finalized_pset.extract_tx()
         txid = client.broadcast(tx)
-        data = "Sent " + str(amount) + " TEST to address " + \
+        data = "Sent " + str(amount) + " sats to address " + \
             address + " with transaction " + str(txid) + "."
     else:
         data = "Error"
@@ -311,21 +290,42 @@ def faucet_amp(gaid, amount):
         address = result['address']
     else:
         return 'Error in fetching address'
-    res = subprocess.run(["./green_cli/send.sh", address,
-                         "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322", '{:.8f}'.format(amount)], capture_output=True)
-    data = "Sent " + '{:.8f}'.format(amount) + " AMP ASSET to address " + \
-        address + " with transaction " + res.stdout.decode('utf-8') + "."
+
+    # Update amp0 wallet
+    last_index = amp0.last_index()
+    update = amp0_client.full_scan_to_index(amp0_wollet, last_index)
+    amp0_wollet.apply_update(update)
+
+    # Create transaction
+    builder = network.tx_builder()
+    builder.add_recipient(Address(address), amount, amp0_assetid)
+    amp0pset = builder.finish_for_amp0(amp0_wollet)
+   
+    # Create the signer
+    amp0_signer = Signer(Mnemonic(amp0_mnemonic), network)
+    
+    # Sign with the user key
+    pset = amp0pset.pset()
+    pset = amp0_signer.sign(pset)
+
+    # Ask AMP0 to cosign
+    amp0pset = Amp0Pset(pset, amp0pset.blinding_nonces())
+    tx = amp0.sign(amp0pset)
+
+    # Broadcast
+    txid = amp0_client.broadcast(tx)
+
+    data = "Sent " + str(amount) + " AMP ASSET to address " + \
+        address + " with transaction " + str(txid)  + "."
     return data
 
 
 @app.route('/api/faucet', methods=['GET'])
-@limiter.limit('100/day;10/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
-    balance_amp = 0 #= subprocess.run(
-    #    ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
+    balance_amp = amp0_wollent.balance().get(amp0_assetid, 0)
     balance = wollet.balance().get(network.policy_asset(), 0)
-    balance_test = wollet.balance().get(
-        '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
+    balance_test = wollet.balance().get(assetid, 0)
     address = request.args.get('address')
     asset = request.args.get('action')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -337,12 +337,12 @@ def api_faucet():
 
     if asset == 'lbtc':
         amount = 100000
-        data = {'result': faucet(address, amount), 'balance': balance,
+        data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
                 'balance_test': balance_test, 'balance_amp': balance_amp}
     elif asset == 'test':
         amount = 5000
-        data = {'result_test': faucet_test(
-            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data = {'result_test': faucet_asset(
+            address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
     elif asset == 'amp':
         amount = 1
         data = {'result_amp': faucet_amp(
@@ -351,13 +351,11 @@ def api_faucet():
 
 
 @app.route('/faucet', methods=['GET'])
-@limiter.limit('100/day;10/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute')
 def url_faucet():
-    balance_amp = 0 #= subprocess.run(
-    #    ["./green_cli/balance.sh", "bea126b86ac7f7b6fc4709d1bb1a8482514a68d35633a5580d50b18504d5c322"], capture_output=True).stdout
+    balance_amp = amp0_wollet.balance().get(amp0_assetid, 0)
     balance = wollet.balance().get(network.policy_asset(), 0)
-    balance_test = wollet.balance().get(
-        '38fca2d939696061a8f76d4e6b5eecd54e3b4221c846f24a6b279e79952850a5', 0)
+    balance_test = wollet.balance().get(assetid, 0)
     address = request.args.get('address')
     asset = request.args.get('action')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -368,31 +366,38 @@ def url_faucet():
         data['form'] = True
         data['form_test'] = True
         data['form_amp'] = True
+        data['assetid'] = assetid
+        data['amp0_assetid'] = amp0_assetid
         data['return_address'] = return_address
+        data['amp0_return_address'] = amp0_return_address
         return render_template('faucet', **data)
 
     if asset == 'lbtc':
         amount = 100000
-        data = {'result': faucet(address, amount), 'balance': balance,
+        data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
                 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = False
         data['form_test'] = True
         data['form_amp'] = True
     elif asset == 'test':
         amount = 5000
-        data = {'result_test': faucet_test(
-            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        data = {'result_test': faucet_asset(
+            address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = False
         data['form_amp'] = True
     elif asset == 'amp':
-        amount = 0.00000001
+        amount = 1
         data = {'result_amp': faucet_amp(
             address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = True
         data['form_amp'] = False
+
+    data['assetid'] = assetid
+    data['amp0_assetid'] = amp0_assetid
     data['return_address'] = return_address
+    data['amp0_return_address'] = amp0_return_address
     return render_template('faucet', **data)
 
 
@@ -421,8 +426,8 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     tx = finalized_pset.extract_tx()
     txid = client.broadcast(tx)
 
-    asset_id = signed_pset.issuance_asset(0)
-    token_id = signed_pset.issuance_token(0)
+    asset_id = signed_pset.inputs()[0].issuance_asset()
+    token_id = signed_pset.inputs()[0].issuance_token()
 
     data['contract'] = str(contract)
     data['asset_id'] = str(asset_id)
@@ -593,5 +598,29 @@ if __name__ == '__main__':
 
     return_address = str(wollet.address(1).address())
 
+    print(wollet.balance())
+
+    # amp0 wallet
+    amp_id = ""
+    amp0 = Amp0(network, amp0_user, amp0_password, amp_id)
+
+    amp0_desc =  amp0.wollet_descriptor()
+    amp0_wollet = Wollet(network, amp0_desc, datadir='./.lwk_data_amp0')
+    b2 = EsploraClientBuilder(
+        base_url="https://waterfalls.liquidwebwallet.org/liquidtestnet/api",
+        network=network,
+        waterfalls=True,
+        utxo_only=True,
+    )
+    amp0_client = EsploraClient.from_builder(b2)
+    last_index = amp0.last_index()
+    update = amp0_client.full_scan_to_index(amp0_wollet, last_index)
+    amp0_wollet.apply_update(update)
+
+    amp0_return_address = str(amp0.address(1).address())
+
+    print(amp0_wollet.balance())
+
+    # Start app
     app.import_name = '.'
     app.run(host='0.0.0.0', port=8123)
