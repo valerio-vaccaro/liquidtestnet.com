@@ -12,8 +12,6 @@ import os
 import configparser
 import json
 import requests
-import subprocess
-import wallycore as wally
 from lwk import *
 from werkzeug.middleware.proxy_fix import ProxyFix
 
