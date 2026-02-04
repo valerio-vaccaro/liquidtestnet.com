@@ -333,19 +333,23 @@ def api_faucet():
                 'balance_test': balance_test, 'balance_amp': balance_amp}
         return jsonify(data)
 
-    if asset == 'lbtc':
-        amount = 100000
-        data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
-                'balance_test': balance_test, 'balance_amp': balance_amp}
-    elif asset == 'test':
-        amount = 5000
-        data = {'result_test': faucet_asset(
-            address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
-    elif asset == 'amp':
-        amount = 1
-        data = {'result_amp': faucet_amp(
-            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
-    return jsonify(data)
+    try:
+        if asset == 'lbtc':
+            amount = 100000
+            data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
+                    'balance_test': balance_test, 'balance_amp': balance_amp}
+        elif asset == 'test':
+            amount = 5000
+            data = {'result_test': faucet_asset(
+                address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        elif asset == 'amp':
+            amount = 1
+            data = {'result_amp': faucet_amp(
+                address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+        return jsonify(data)
+    except Exception as e:
+        data = {'result': 'error', 'error': str(e)}
+        return jsonify(data)
 
 
 @app.route('/faucet', methods=['GET'])
@@ -358,9 +362,49 @@ def url_faucet():
     asset = request.args.get('action')
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
 
-    if address is None:
-        data = {'result': 'missing address', 'balance': balance,
-                'balance_test': balance_test, 'balance_amp': balance_amp}
+    try:
+        if address is None:
+            data = {'result': 'missing address', 'balance': balance,
+                    'balance_test': balance_test, 'balance_amp': balance_amp}
+            data['form'] = True
+            data['form_test'] = True
+            data['form_amp'] = True
+            data['assetid'] = assetid
+            data['amp0_assetid'] = amp0_assetid
+            data['return_address'] = return_address
+            data['amp0_return_address'] = amp0_return_address
+            return render_template('faucet', **data)
+
+        if asset == 'lbtc':
+            amount = 100000
+            data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
+                    'balance_test': balance_test, 'balance_amp': balance_amp}
+            data['form'] = False
+            data['form_test'] = True
+            data['form_amp'] = True
+        elif asset == 'test':
+            amount = 5000
+            data = {'result_test': faucet_asset(
+                address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            data['form'] = True
+            data['form_test'] = False
+            data['form_amp'] = True
+        elif asset == 'amp':
+            amount = 1
+            data = {'result_amp': faucet_amp(
+                address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            data['form'] = True
+            data['form_test'] = True
+            data['form_amp'] = False
+
+        data['assetid'] = assetid
+        data['amp0_assetid'] = amp0_assetid
+        data['return_address'] = return_address
+        data['amp0_return_address'] = amp0_return_address
+        return render_template('faucet', **data)
+    except Exception as e:
+        data = {'result': 'error ' + str(e), 'balance': balance,
+                    'balance_test': balance_test, 'balance_amp': balance_amp}
         data['form'] = True
         data['form_test'] = True
         data['form_amp'] = True
@@ -369,34 +413,6 @@ def url_faucet():
         data['return_address'] = return_address
         data['amp0_return_address'] = amp0_return_address
         return render_template('faucet', **data)
-
-    if asset == 'lbtc':
-        amount = 100000
-        data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
-                'balance_test': balance_test, 'balance_amp': balance_amp}
-        data['form'] = False
-        data['form_test'] = True
-        data['form_amp'] = True
-    elif asset == 'test':
-        amount = 5000
-        data = {'result_test': faucet_asset(
-            address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
-        data['form'] = True
-        data['form_test'] = False
-        data['form_amp'] = True
-    elif asset == 'amp':
-        amount = 1
-        data = {'result_amp': faucet_amp(
-            address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
-        data['form'] = True
-        data['form_test'] = True
-        data['form_amp'] = False
-
-    data['assetid'] = assetid
-    data['amp0_assetid'] = amp0_assetid
-    data['return_address'] = return_address
-    data['amp0_return_address'] = amp0_return_address
-    return render_template('faucet', **data)
 
 
 def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubkey, name, ticker, precision, domain):
