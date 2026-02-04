@@ -321,7 +321,7 @@ def faucet_amp(gaid, amount):
 @app.route('/api/faucet', methods=['GET'])
 @limiter.limit('1000/day;100/hour;3/minute')
 def api_faucet():
-    balance_amp = amp0_wollent.balance().get(amp0_assetid, 0)
+    balance_amp = amp0_wollet.balance().get(amp0_assetid, 0)
     balance = wollet.balance().get(network.policy_asset(), 0)
     balance_test = wollet.balance().get(assetid, 0)
     address = request.args.get('address')
