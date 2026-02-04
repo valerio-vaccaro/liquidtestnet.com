@@ -25,6 +25,7 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"],
     storage_uri="memory://",
 )
+
 qrcode = QRcode(app)
 
 config = configparser.RawConfigParser()
@@ -63,6 +64,8 @@ host = RPCHost(serverURL)
 if (len(rpcPassphrase) > 0):
     result = host.call('walletpassphrase', rpcPassphrase, 60)
 
+def index_ratelimit_error_responder(request_limit):
+    return jsonify({"error": "rate_limit_exceeded"})
 
 @app.route('/robots.txt')
 def noindex():
@@ -103,13 +106,6 @@ def api_stats():
 def url_home():
     data = stats()
     return render_template('home', **data)
-
-
-@app.route('/home_old', methods=['GET'])
-@limiter.exempt
-def url_home_old():
-    data = stats()
-    return render_template('home_old', **data)
 
 
 def explorer(start, last):
@@ -319,7 +315,7 @@ def faucet_amp(gaid, amount):
 
 
 @app.route('/api/faucet', methods=['GET'])
-@limiter.limit('1000/day;100/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute',  on_breach=index_ratelimit_error_responder)
 def api_faucet():
     balance_amp = amp0_wollet.balance().get(amp0_assetid, 0)
     balance = wollet.balance().get(network.policy_asset(), 0)
@@ -454,7 +450,7 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
 
 
 @app.route('/api/issuer', methods=['GET'])
-@limiter.limit('1000/day;100/hour;3/minute')
+@limiter.limit('1000/day;100/hour;3/minute',  on_breach=index_ratelimit_error_responder)
 def api_issuer():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     command = request.args.get('command')
@@ -519,7 +515,6 @@ def broadcast(tx):
 
 
 @app.route('/api/utils', methods=['GET'])
-#@limiter.limit('1000/day;100/hour;3/minute')
 @limiter.exempt
 def api_utils():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
