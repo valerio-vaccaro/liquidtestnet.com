@@ -266,24 +266,24 @@ def faucet_asset(address, amount, asset):
         finalized_pset = wollet.finalize(signed_pset)
         tx = finalized_pset.extract_tx()
         txid = client.broadcast(tx)
-        data = "Sent " + str(amount) + " sats to address " + \
+        message = "Sent " + str(amount) + " sats to address " + \
             address + " with transaction " + str(txid) + "."
+        return {"success": True, "message": message, "txid": str(txid)}
     else:
-        data = "Error"
-    return data
+        return {"success": False, "message": "Error"}
 
 
 def faucet_amp(gaid, amount):
     result = requests.get(f'{ampUrl}gaids/{gaid}/validate', headers={
                           'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
     if not result['is_valid']:
-        return 'Invalid GAID'
+        return {"success": False, "message": "Invalid GAID"}
     result = requests.get(f'{ampUrl}gaids/{gaid}/address', headers={
                           'content-type': 'application/json', 'Authorization': f'token {ampToken}'}).json()
     if result['error'] == '':
         address = result['address']
     else:
-        return 'Error in fetching address'
+        return {"success": False, "message": "Error in fetching address"}
 
     # Update amp0 wallet
     last_index = amp0.last_index()
@@ -309,9 +309,9 @@ def faucet_amp(gaid, amount):
     # Broadcast
     txid = amp0_client.broadcast(tx)
 
-    data = "Sent " + str(amount) + " AMP ASSET to address " + \
+    message = "Sent " + str(amount) + " AMP ASSET to address " + \
         address + " with transaction " + str(txid)  + "."
-    return data
+    return {"success": True, "message": message, "txid": str(txid)}
 
 
 @app.route('/api/faucet', methods=['GET'])
@@ -332,16 +332,22 @@ def api_faucet():
     try:
         if asset == 'lbtc':
             amount = 100000
-            data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
+            res = faucet_asset(address, amount, network.policy_asset())
+            data = {'result': res['message'], 'balance': balance,
                     'balance_test': balance_test, 'balance_amp': balance_amp}
+            if 'txid' in res: data['txid'] = res['txid']
+
         elif asset == 'test':
             amount = 5000
-            data = {'result_test': faucet_asset(
-                address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            res = faucet_asset(address, amount, assetid)
+            data = {'result_test': res['message'], 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            if 'txid' in res: data['txid'] = res['txid']
+
         elif asset == 'amp':
             amount = 1
-            data = {'result_amp': faucet_amp(
-                address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            res = faucet_amp(address, amount)
+            data = {'result_amp': res['message'], 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            if 'txid' in res: data['txid'] = res['txid']
         return jsonify(data)
     except Exception as e:
         data = {'result': 'error', 'error': str(e)}
@@ -373,22 +379,23 @@ def url_faucet():
 
         if asset == 'lbtc':
             amount = 100000
-            data = {'result': faucet_asset(address, amount, network.policy_asset()), 'balance': balance,
+            res = faucet_asset(address, amount, network.policy_asset())
+            data = {'result': res['message'], 'balance': balance,
                     'balance_test': balance_test, 'balance_amp': balance_amp}
             data['form'] = False
             data['form_test'] = True
             data['form_amp'] = True
         elif asset == 'test':
             amount = 5000
-            data = {'result_test': faucet_asset(
-                address, amount, assetid), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            res = faucet_asset(address, amount, assetid)
+            data = {'result_test': res['message'], 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
             data['form'] = True
             data['form_test'] = False
             data['form_amp'] = True
         elif asset == 'amp':
             amount = 1
-            data = {'result_amp': faucet_amp(
-                address, amount), 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            res = faucet_amp(address, amount)
+            data = {'result_amp': res['message'], 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
             data['form'] = True
             data['form_test'] = True
             data['form_amp'] = False
