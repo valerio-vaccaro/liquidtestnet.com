@@ -249,12 +249,19 @@ def url_transaction():
     return render_template('transaction', **data)
 
 
+def sync():
+    global last_update_or_tx
+    if time.time() - last_update_or_tx > 2:
+        update = client.full_scan(wollet)
+        wollet.apply_update(update)
+        last_update_or_tx = time.time()
+
+
 def faucet_asset(address, amount, asset):
     validate_res = host.call('validateaddress', address)
     if validate_res['isvalid']:
         # Call LWK
-        update = client.full_scan(wollet)
-        wollet.apply_update(update)
+        sync()
         builder = network.tx_builder()
         if validate_res['confidential_key'] == '':
             builder.add_explicit_recipient(Address(address), amount, asset)
@@ -266,6 +273,7 @@ def faucet_asset(address, amount, asset):
         finalized_pset = wollet.finalize(signed_pset)
         tx = finalized_pset.extract_tx()
         txid = client.broadcast(tx)
+        wollet.apply_transaction(tx)
         message = "Sent " + str(amount) + " sats to address " + \
             address + " with transaction " + str(txid) + "."
         return {"success": True, "message": message, "txid": str(txid)}
@@ -427,8 +435,7 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     asset_amount = int(asset_amount) * 10 ** int(precision)
 
     # Call LWK
-    update = client.full_scan(wollet)
-    wollet.apply_update(update)
+    sync()
 
     contract = Contract(domain=domain, issuer_pubkey=issuer_pubkey,
                         name=name, precision=int(precision), ticker=ticker, version=version)
@@ -442,6 +449,7 @@ def issuer(asset_amount, asset_address, token_amount, token_address, issuer_pubk
     finalized_pset = wollet.finalize(signed_pset)
     tx = finalized_pset.extract_tx()
     txid = client.broadcast(tx)
+    wollet.apply_transaction(tx)
 
     asset_id = signed_pset.inputs()[0].issuance_asset()
     token_id = signed_pset.inputs()[0].issuance_token()
@@ -611,6 +619,9 @@ if __name__ == '__main__':
     wollet = Wollet(network, desc, datadir="./.lwk_data")
     update = client.full_scan(wollet)
     wollet.apply_update(update)
+    # here we initialize a global variable (since we're in "main")
+    # that will be updated later
+    last_update_or_tx = time.time()
 
     return_address = str(wollet.address(1).address())
 
