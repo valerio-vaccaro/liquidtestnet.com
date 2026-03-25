@@ -14,6 +14,7 @@ import json
 import requests
 from lwk import *
 from werkzeug.middleware.proxy_fix import ProxyFix
+import time 
 
 app = Flask(__name__, static_url_path='/static')
 app.wsgi_app = ProxyFix(
@@ -251,8 +252,11 @@ def url_transaction():
 
 def sync():
     global last_update_or_tx
+    print("SYNC")
     if time.time() - last_update_or_tx > 2:
+        print("REAL SYNC")
         update = client.full_scan(wollet)
+        print(update)
         wollet.apply_update(update)
         last_update_or_tx = time.time()
 
@@ -261,7 +265,13 @@ def faucet_asset(address, amount, asset):
     validate_res = host.call('validateaddress', address)
     if validate_res['isvalid']:
         # Call LWK
+        balance = wollet.balance().get(network.policy_asset(), 0)
+        print("PRE")
+        print(balance)
         sync()
+        balance = wollet.balance().get(network.policy_asset(), 0)
+        print("PRE-post sync")
+        print(balance)
         builder = network.tx_builder()
         if validate_res['confidential_key'] == '':
             builder.add_explicit_recipient(Address(address), amount, asset)
@@ -274,6 +284,10 @@ def faucet_asset(address, amount, asset):
         tx = finalized_pset.extract_tx()
         txid = client.broadcast(tx)
         wollet.apply_transaction(tx)
+        balance = wollet.balance().get(network.policy_asset(), 0)
+        print("POST")
+        print(balance)
+        
         message = "Sent " + str(amount) + " sats to address " + \
             address + " with transaction " + str(txid) + "."
         return {"success": True, "message": message, "txid": str(txid)}
@@ -323,7 +337,8 @@ def faucet_amp(gaid, amount):
 
 
 @app.route('/api/faucet', methods=['GET'])
-@limiter.limit('1000/day;100/hour;3/minute',  on_breach=index_ratelimit_error_responder)
+#@limiter.limit('1000/day;100/hour;3/minute',  on_breach=index_ratelimit_error_responder)
+@limiter.exempt
 def api_faucet():
     balance_amp = amp0_wollet.balance().get(amp0_assetid, 0)
     balance = wollet.balance().get(network.policy_asset(), 0)
