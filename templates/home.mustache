@@ -32,7 +32,8 @@
             <br/><br/>
             <div class="well">
                <h3>What is Liquid testnet?</h3>
-               It's a testnet for the Liquid sidechain. 
+               It's a testnet for the Liquid sidechain.
+               Liquid testnet requires Elements version 23.3.1 or newer.
 
                <h3>How to join?</h3>
                <pre>
@@ -46,16 +47,15 @@ daemon=1
 server=1
 listen=1
 txindex=1
-addnode=liquid.network:18444
-addnode=liquid-testnet.blockstream.com:18891
-addnode=liquidtestnet.com:18891
+addnode=liquid.network
+addnode=liquid-testnet.blockstream.com
+addnode=liquidtestnet.com
 
 # liquidtestnet RPC settings (local RPC calls - optional):
 rpcuser=user
 rpcpassword=password
 rpcport=18891
             </pre>
-	       <p>Or use <a href="/home_old"> this configs</a> for old elements nodes (before 22.1.1).</p>
                <h3>Statistics</h3>
                <p>Height: {{height}}</p>
                <p>Mempool: {{mempool}}</p>
