@@ -8,24 +8,32 @@
       <title>Liquid testnet</title>
       <link href="/static/bootstrap.min.css" rel="stylesheet">
       <link href="/static/base.css" rel="stylesheet">
+    <link href="/static/theme.css" rel="stylesheet">
       <script src="/static/jquery.min.js"></script>
       <script src="/static/bootstrap.min.js"></script>
    </head>
    <body>
-      <nav class="navbar navbar-inverse navbar-fixed-top">
-         <div class="container">
-            <div class="navbar-header">
-              <a class="navbar-brand" href="/">Home</a>
-              <a class="navbar-brand" href="/explorer">Explorer</a>
-              <a class="navbar-brand" href="/mempool">Mempool</a>
-              <a class="navbar-brand" href="/faucet">Faucet</a>
-              <a class="navbar-brand" href="/issuer">Issuer</a>
-              <a class="navbar-brand" href="/utils">Utils</a>
-              <a class="navbar-brand" href="https://liquidwebwallet.org/testnet/" target="_blank">Liquid Web Wallet</a>
-              <a class="navbar-brand" href="/about">About</a>
-            </div>
-         </div>
-      </nav>
+    <nav class="site-nav">
+      <div class="site-nav__inner">
+        <a class="site-nav__brand" href="/">
+          <span class="site-nav__logo" aria-hidden="true"></span>
+          Liquid<span class="accent">testnet</span>
+        </a>
+        <button class="site-nav__toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="site-nav__links">
+          <a href="/">Home</a>
+          <a href="/explorer">Explorer</a>
+          <a href="/mempool">Mempool</a>
+          <a href="/faucet">Faucet</a>
+          <a href="/issuer">Issuer</a>
+          <a href="/utils">Utils</a>
+          <a href="https://liquidwebwallet.org/testnet/" target="_blank" rel="noopener">Liquid Web Wallet</a>
+          <a href="/about">About</a>
+        </div>
+      </div>
+    </nav>
       <div class="container-fluid">
          <br/><br/><br/><br/>
          <div id="sl">
@@ -67,5 +75,6 @@ rpcport=18891
          </div>
       </div>
       </div>
+    <script src="/static/theme.js"></script>
    </body>
 </html>

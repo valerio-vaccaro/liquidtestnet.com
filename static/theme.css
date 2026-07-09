@@ -1,0 +1,378 @@
+/* Liquid testnet — dark theme inspired by blockstream.com's design tokens
+   (bg #0c0d0f, accent #00c3ff, panel #1d2127) layered on top of the
+   existing Bootstrap 3 markup so templates didn't need structural changes. */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --bg: #0c0d0f;
+  --bg-elevated: #16181c;
+  --panel: #1d2127;
+  --panel-border: #262b31;
+  --text: #f5f7f8;
+  --text-muted: #c3cdd3;
+  --text-dim: #838d94;
+  --accent: #00c3ff;
+  --accent-soft: rgba(0, 195, 255, 0.12);
+  --success: #00b45a;
+  --warning: #e09a02;
+  --danger: #dd1f48;
+  --radius: 10px;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  --nav-h: 64px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Source Sans Pro", Arial, sans-serif;
+  padding-top: var(--nav-h);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* remove the old fixed-navbar spacer hacks (four <br/> right after container-fluid) */
+.container-fluid > br {
+  display: none;
+}
+
+a {
+  color: var(--accent);
+  transition: color 0.15s var(--ease);
+}
+a:hover,
+a:focus {
+  color: #6adfff;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+code, pre {
+  background: var(--bg-elevated);
+  color: #9fe8ff;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+}
+
+pre {
+  padding: 16px;
+}
+
+hr {
+  border-color: var(--panel-border);
+}
+
+/* ---------- Navbar ---------- */
+
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-h);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  background: rgba(12, 13, 15, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease);
+}
+
+.site-nav.is-scrolled {
+  background: rgba(12, 13, 15, 0.92);
+  border-bottom-color: var(--panel-border);
+}
+
+.site-nav__inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.site-nav__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--text) !important;
+  white-space: nowrap;
+}
+
+.site-nav__brand .accent {
+  color: var(--accent);
+}
+
+.site-nav__logo {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px 2px var(--accent-soft);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+.site-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.site-nav__links a {
+  position: relative;
+  color: var(--text-muted) !important;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.site-nav__links a::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s var(--ease);
+}
+
+.site-nav__links a:hover,
+.site-nav__links a.is-active {
+  color: var(--text) !important;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.site-nav__links a:hover::after,
+.site-nav__links a.is-active::after {
+  transform: scaleX(1);
+}
+
+.site-nav__toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.site-nav__toggle span {
+  width: 22px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: transform 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+
+@media (max-width: 900px) {
+  .site-nav__toggle {
+    display: flex;
+  }
+  .site-nav__links {
+    position: fixed;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    background: rgba(12, 13, 15, 0.97);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid transparent;
+    padding: 0 16px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s var(--ease), padding 0.25s var(--ease);
+  }
+  .site-nav__links.is-open {
+    max-height: 480px;
+    padding: 8px 16px 16px;
+    border-bottom-color: var(--panel-border);
+  }
+  .site-nav__links a {
+    padding: 12px;
+  }
+}
+
+/* ---------- Panels ("well") ---------- */
+
+.well {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+  margin-bottom: 24px;
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.well:hover {
+  border-color: rgba(0, 195, 255, 0.35);
+}
+
+.well h3:first-child {
+  margin-top: 0;
+}
+
+/* ---------- Scroll reveal ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .site-nav__logo {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  padding: 10px 20px;
+  transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), filter 0.15s var(--ease);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary,
+.btn-info {
+  background: var(--accent);
+  color: #04151b;
+}
+.btn-primary:hover,
+.btn-info:hover {
+  box-shadow: 0 6px 20px rgba(0, 195, 255, 0.35);
+}
+
+.btn-success {
+  background: var(--success);
+  color: #04150c;
+}
+.btn-success:hover {
+  box-shadow: 0 6px 20px rgba(0, 180, 90, 0.35);
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: #1a1000;
+}
+.btn-warning:hover {
+  box-shadow: 0 6px 20px rgba(224, 154, 2, 0.35);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover {
+  box-shadow: 0 6px 20px rgba(221, 31, 72, 0.35);
+}
+
+.btn[disabled] {
+  filter: grayscale(0.6);
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* ---------- Forms ---------- */
+
+.form-control {
+  background: var(--bg-elevated);
+  border: 1px solid var(--panel-border);
+  color: var(--text);
+  border-radius: 8px;
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+.form-control:focus {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.form-control::placeholder {
+  color: var(--text-dim);
+}
+
+label {
+  color: var(--text-muted);
+}
+
+/* ---------- Tables ---------- */
+
+.table {
+  color: var(--text);
+}
+
+.table > thead > tr > th,
+.table > tbody > tr > td {
+  border-color: var(--panel-border);
+}
+
+/* ---------- Misc ---------- */
+
+::selection {
+  background: var(--accent);
+  color: #04151b;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px 1px var(--accent-soft);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px var(--accent-soft);
+  }
+}
