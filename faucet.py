@@ -630,6 +630,260 @@ def api_about():
     return jsonify(data)
 
 
+RATE_LIMIT_RESPONSE = {
+    'description': 'Rate limit exceeded',
+    'content': {
+        'application/json': {
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'error': {'type': 'string', 'example': 'rate_limit_exceeded'},
+                    'message': {'type': 'string', 'example': '3 per 1 minute'},
+                },
+            }
+        }
+    },
+}
+
+
+def build_openapi_spec():
+    return {
+        'openapi': '3.0.3',
+        'info': {
+            'title': 'Liquid testnet API',
+            'description': 'Read-only explorer data and faucet/issuer actions for the Liquid testnet.',
+            'version': APP_VERSION,
+            'license': {'name': 'MIT', 'url': 'https://github.com/valerio-vaccaro/liquidtestnet.com/blob/main/LICENSE'},
+        },
+        'servers': [{'url': request.url_root.rstrip('/')}],
+        'paths': {
+            '/api/stats': {
+                'get': {
+                    'summary': 'Node statistics',
+                    'tags': ['General'],
+                    'responses': {
+                        '200': {
+                            'description': 'Chain and host statistics',
+                            'content': {'application/json': {'schema': {
+                                'type': 'object',
+                                'properties': {
+                                    'height': {'type': 'integer', 'example': 2521389},
+                                    'mempool': {'type': 'string', 'example': '4 tx (0.0 MB)'},
+                                    'space': {'type': 'string', 'example': '4400.69 MB'},
+                                    'uptime': {'type': 'string'},
+                                    'uname': {'type': 'string'},
+                                },
+                            }}},
+                        }
+                    },
+                }
+            },
+            '/api/explorer': {
+                'get': {
+                    'summary': 'List recent blocks',
+                    'tags': ['Explorer'],
+                    'parameters': [
+                        {
+                            'name': 'start',
+                            'in': 'query',
+                            'required': False,
+                            'schema': {'type': 'integer'},
+                            'description': 'Block height to start from (descending). Defaults to the current tip.',
+                        }
+                    ],
+                    'responses': {
+                        '200': {
+                            'description': 'Up to 120 blocks, newest first',
+                            'content': {'application/json': {'schema': {
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'id': {'type': 'integer'},
+                                        'hash': {'type': 'string'},
+                                        'size': {'type': 'integer'},
+                                        'time': {'type': 'integer'},
+                                        'nTx': {'type': 'integer'},
+                                    },
+                                },
+                            }}},
+                        }
+                    },
+                }
+            },
+            '/api/block': {
+                'get': {
+                    'summary': 'Get a block by height',
+                    'tags': ['Explorer'],
+                    'parameters': [
+                        {
+                            'name': 'height',
+                            'in': 'query',
+                            'required': True,
+                            'schema': {'type': 'integer'},
+                        }
+                    ],
+                    'responses': {
+                        '200': {
+                            'description': 'Block data (Elements `getblock` verbosity 2), or an error object',
+                            'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': True}}},
+                        }
+                    },
+                }
+            },
+            '/api/mempool': {
+                'get': {
+                    'summary': 'List mempool transaction ids',
+                    'tags': ['Explorer'],
+                    'responses': {
+                        '200': {
+                            'description': 'Raw mempool txids',
+                            'content': {'application/json': {'schema': {'type': 'array', 'items': {'type': 'string'}}}},
+                        }
+                    },
+                }
+            },
+            '/api/transaction': {
+                'get': {
+                    'summary': 'Get a transaction by txid',
+                    'tags': ['Explorer'],
+                    'parameters': [
+                        {
+                            'name': 'txid',
+                            'in': 'query',
+                            'required': True,
+                            'schema': {'type': 'string', 'minLength': 64, 'maxLength': 64},
+                        }
+                    ],
+                    'responses': {
+                        '200': {
+                            'description': 'Transaction data (Elements `getrawtransaction` verbose), or an error object',
+                            'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': True}}},
+                        }
+                    },
+                }
+            },
+            '/api/faucet': {
+                'get': {
+                    'summary': 'Request testnet L-BTC, the TEST asset, or an AMP asset',
+                    'tags': ['Faucet'],
+                    'parameters': [
+                        {
+                            'name': 'address',
+                            'in': 'query',
+                            'required': False,
+                            'schema': {'type': 'string'},
+                            'description': 'Destination address. Omit to only fetch current faucet balances.',
+                        },
+                        {
+                            'name': 'action',
+                            'in': 'query',
+                            'required': False,
+                            'schema': {'type': 'string', 'enum': ['lbtc', 'test', 'amp']},
+                            'description': 'lbtc: 100000 sats. test: 5000 sats of the TEST asset. amp: 1 unit of the AMP asset (address is a GAID).',
+                        },
+                    ],
+                    'responses': {
+                        '200': {
+                            'description': 'Balances plus a result message, and a txid on success',
+                            'content': {'application/json': {'schema': {
+                                'type': 'object',
+                                'properties': {
+                                    'result': {'type': 'string'},
+                                    'result_test': {'type': 'string'},
+                                    'result_amp': {'type': 'string'},
+                                    'balance': {'type': 'integer'},
+                                    'balance_test': {'type': 'integer'},
+                                    'balance_amp': {'type': 'integer'},
+                                    'txid': {'type': 'string'},
+                                },
+                            }}},
+                        },
+                        '429': RATE_LIMIT_RESPONSE,
+                    },
+                }
+            },
+            '/api/issuer': {
+                'get': {
+                    'summary': 'Issue a new Liquid testnet asset',
+                    'tags': ['Issuer'],
+                    'parameters': [
+                        {'name': 'command', 'in': 'query', 'required': True, 'schema': {'type': 'string', 'enum': ['asset']}},
+                        {'name': 'asset_amount', 'in': 'query', 'required': True, 'schema': {'type': 'integer'}},
+                        {'name': 'asset_address', 'in': 'query', 'required': True, 'schema': {'type': 'string'}},
+                        {'name': 'token_amount', 'in': 'query', 'required': True, 'schema': {'type': 'integer'}},
+                        {'name': 'token_address', 'in': 'query', 'required': True, 'schema': {'type': 'string'}},
+                        {'name': 'pubkey', 'in': 'query', 'required': True, 'schema': {'type': 'string'}, 'description': 'Issuer public key'},
+                        {'name': 'name', 'in': 'query', 'required': True, 'schema': {'type': 'string'}},
+                        {'name': 'ticker', 'in': 'query', 'required': True, 'schema': {'type': 'string'}},
+                        {'name': 'precision', 'in': 'query', 'required': True, 'schema': {'type': 'integer'}},
+                        {'name': 'domain', 'in': 'query', 'required': True, 'schema': {'type': 'string'}},
+                    ],
+                    'responses': {
+                        '200': {
+                            'description': 'The issued asset/token ids and registry entry, or an empty object if `command` was omitted',
+                            'content': {'application/json': {'schema': {
+                                'type': 'object',
+                                'properties': {
+                                    'contract': {'type': 'string'},
+                                    'asset_id': {'type': 'string'},
+                                    'token_id': {'type': 'string'},
+                                    'txid': {'type': 'string'},
+                                    'registry': {'type': 'string'},
+                                    'domain': {'type': 'string'},
+                                    'name': {'type': 'string'},
+                                },
+                            }}},
+                        },
+                        '429': RATE_LIMIT_RESPONSE,
+                    },
+                }
+            },
+            '/api/utils': {
+                'get': {
+                    'summary': 'Write an OP_RETURN phrase, test-mempool-accept, or broadcast a raw transaction',
+                    'tags': ['Utils'],
+                    'parameters': [
+                        {'name': 'command', 'in': 'query', 'required': True, 'schema': {'type': 'string', 'enum': ['opreturn', 'test', 'broadcast']}},
+                        {'name': 'text', 'in': 'query', 'required': False, 'schema': {'type': 'string'}, 'description': 'Hex phrase, used with command=opreturn'},
+                        {'name': 'tx', 'in': 'query', 'required': False, 'schema': {'type': 'string'}, 'description': 'Raw transaction hex, used with command=test or command=broadcast'},
+                    ],
+                    'responses': {
+                        '200': {
+                            'description': 'Result of the requested command, or an empty object if `command` was omitted',
+                            'content': {'application/json': {'schema': {'type': 'object', 'additionalProperties': True}}},
+                        }
+                    },
+                }
+            },
+            '/api/about': {
+                'get': {
+                    'summary': 'About endpoint (reserved)',
+                    'tags': ['General'],
+                    'responses': {
+                        '200': {
+                            'description': 'Currently always an empty object',
+                            'content': {'application/json': {'schema': {'type': 'object'}}},
+                        }
+                    },
+                }
+            },
+        },
+    }
+
+
+@app.route('/openapi.json', methods=['GET'])
+@limiter.exempt
+def openapi_json():
+    return jsonify(build_openapi_spec())
+
+
+@app.route('/apidocs', methods=['GET'])
+@limiter.exempt
+def url_apidocs():
+    return render_template('apidocs')
+
+
 @app.route('/about', methods=['GET'])
 @limiter.exempt
 def url_about():

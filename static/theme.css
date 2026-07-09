@@ -247,6 +247,23 @@ hr {
   border-left-color: var(--warning);
 }
 
+/* Swagger UI ships its own light theme; give it a flush white card
+   instead of fighting it with our dark panel styles. */
+.well--flush {
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.well--flush:hover {
+  border-color: var(--panel-border);
+}
+
+#sl.sl--wide {
+  width: 95%;
+  max-width: 1400px;
+}
+
 /* ---------- Scroll reveal ---------- */
 
 .reveal {
