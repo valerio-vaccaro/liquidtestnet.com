@@ -361,6 +361,39 @@ label {
   border-color: var(--panel-border);
 }
 
+/* ---------- Footer ---------- */
+
+.site-footer {
+  margin-top: 48px;
+  border-top: 1px solid var(--panel-border);
+  padding: 24px;
+}
+
+.site-footer__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+  text-align: center;
+}
+
+.site-footer__inner a {
+  color: var(--text-muted);
+}
+
+.site-footer__inner a:hover {
+  color: var(--accent);
+}
+
+.site-footer__sep {
+  color: var(--panel-border);
+}
+
 /* ---------- Misc ---------- */
 
 ::selection {

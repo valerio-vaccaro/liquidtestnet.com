@@ -5,16 +5,37 @@ from flask import (
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_stache import render_template
+from flask_stache import render_template as _render_template
 from flask_qrcode import QRcode
 from bitcoin_rpc_class import RPCHost
 import os
 import configparser
 import json
 import requests
+import subprocess
 import time
 from lwk import *
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+
+def get_version():
+    try:
+        return subprocess.check_output(
+            ['git', 'describe', '--tags', '--exact-match'],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            stderr=subprocess.DEVNULL,
+        ).decode().strip()
+    except Exception:
+        return 'dev'
+
+
+APP_VERSION = get_version()
+
+
+def render_template(template, **context):
+    context.setdefault('app_version', APP_VERSION)
+    return _render_template(template, **context)
+
 
 app = Flask(__name__, static_url_path='/static')
 app.wsgi_app = ProxyFix(
