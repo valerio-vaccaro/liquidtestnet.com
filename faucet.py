@@ -2,6 +2,7 @@ from flask import (
     Flask,
     request,
     jsonify,
+    Response,
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -88,6 +89,18 @@ if (len(rpcPassphrase) > 0):
 
 def index_ratelimit_error_responder(request_limit):
     return jsonify({"error": "rate_limit_exceeded"})
+
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    if request.path.startswith('/api/'):
+        return jsonify({"error": "rate_limit_exceeded", "message": e.description}), 429
+    return render_template(
+        'error',
+        title='Too many requests',
+        message='You have made too many requests (limit: %s). Please wait a moment and try again.' % e.description,
+    ), 429
+
 
 @app.route('/robots.txt')
 def noindex():

@@ -238,6 +238,15 @@ hr {
   margin-top: 0;
 }
 
+.well--warning {
+  border-left: 3px solid var(--warning);
+}
+
+.well--warning:hover {
+  border-color: var(--panel-border);
+  border-left-color: var(--warning);
+}
+
 /* ---------- Scroll reveal ---------- */
 
 .reveal {
