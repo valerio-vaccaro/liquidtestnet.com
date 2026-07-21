@@ -3,6 +3,7 @@ from flask import (
     request,
     jsonify,
     Response,
+    send_from_directory,
 )
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -50,6 +51,9 @@ limiter = Limiter(
 )
 
 qrcode = QRcode(app)
+
+PUBLIC_ORIGIN = 'https://liquidtestnet.com'
+INDEXABLE_PATHS = ('/', '/explorer', '/mempool', '/faucet', '/issuer', '/utils', '/apidocs', '/about')
 
 config = configparser.RawConfigParser()
 config.read('liquid.conf')
@@ -103,10 +107,56 @@ def ratelimit_handler(e):
 
 
 @app.route('/robots.txt')
-def noindex():
-    r = Response(response="User-Agent: *\nDisallow: /\n", status=200, mimetype="text/plain")
+@limiter.exempt
+def robots_txt():
+    r = Response(response="""User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /block
+Disallow: /transaction
+Disallow: /openapi.json
+
+Sitemap: https://liquidtestnet.com/sitemap.xml
+""", status=200, mimetype="text/plain")
     r.headers["Content-Type"] = "text/plain; charset=utf-8"
     return r
+
+
+@app.route('/sitemap.xml')
+@limiter.exempt
+def sitemap_xml():
+    urls = ''.join(
+        '  <url><loc>{}{}</loc></url>\n'.format(PUBLIC_ORIGIN, path)
+        for path in INDEXABLE_PATHS
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           '{}'
+           '</urlset>\n').format(urls)
+    return Response(xml, mimetype='application/xml')
+
+
+@app.route('/site.webmanifest')
+@limiter.exempt
+def webmanifest():
+    return send_from_directory(app.static_folder, 'site.webmanifest', mimetype='application/manifest+json')
+
+
+@app.route('/favicon.ico')
+@limiter.exempt
+def favicon():
+    return send_from_directory(app.static_folder, 'favicon.ico', mimetype='image/x-icon')
+
+
+@app.after_request
+def search_engine_headers(response):
+    """Keep API responses and parameterized explorer pages out of search results."""
+    if (request.path.startswith('/api/') or request.path in ('/block', '/transaction', '/openapi.json')
+            or (request.path in ('/faucet', '/issuer', '/utils') and request.args)):
+        response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    elif request.path in INDEXABLE_PATHS and not request.args:
+        response.headers.add('Link', '<{}{}>; rel="canonical"'.format(PUBLIC_ORIGIN, request.path))
+    return response
 
 
 @app.route('/.well-known/<path:filename>')

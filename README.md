@@ -208,6 +208,19 @@ The server will start on `http://0.0.0.0:8123`
 | `/utils` | Transaction utilities |
 | `/about` | About page |
 
+### Search engine publishing
+
+The application exposes the standard discovery endpoints required by search engines:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/robots.txt` | Allows public pages to be crawled, excludes API and parameterized explorer pages, and advertises the sitemap. |
+| `/sitemap.xml` | Lists the public canonical pages. |
+| `/site.webmanifest` | Declares the site name, colours, and application icons. |
+| `/favicon.ico` | Provides a root-level favicon for browsers and search results. |
+
+After deploying the site at `https://liquidtestnet.com`, add that domain as a property in Google Search Console and submit `https://liquidtestnet.com/sitemap.xml`. Domain ownership verification is performed in Search Console and requires a site-specific DNS record or verification token, so it is intentionally not committed to this repository.
+
 ---
 
 ## 📡 API
