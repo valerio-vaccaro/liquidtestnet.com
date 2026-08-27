@@ -475,6 +475,7 @@ def url_faucet():
             res = faucet_asset(address, amount, network.policy_asset())
             data = {'result': res['message'], 'balance': balance,
                     'balance_test': balance_test, 'balance_amp': balance_amp}
+            data['faucet_success'] = res['success']
             data['form'] = False
             data['form_test'] = True
             data['form_amp'] = True
@@ -482,6 +483,7 @@ def url_faucet():
             amount = 5000
             res = faucet_asset(address, amount, assetid)
             data = {'result_test': res['message'], 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            data['faucet_success'] = res['success']
             data['form'] = True
             data['form_test'] = False
             data['form_amp'] = True
@@ -489,6 +491,7 @@ def url_faucet():
             amount = 1
             res = faucet_amp(address, amount)
             data = {'result_amp': res['message'], 'balance': balance, 'balance_test': balance_test, 'balance_amp': balance_amp}
+            data['faucet_success'] = res['success']
             data['form'] = True
             data['form_test'] = True
             data['form_amp'] = False

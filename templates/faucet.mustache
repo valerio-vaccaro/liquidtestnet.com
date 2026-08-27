@@ -43,6 +43,9 @@
         </div>
       </div>
     </nav>
+      {{#faucet_success}}
+      <div class="faucet-rain" id="faucetRain" aria-hidden="true"></div>
+      {{/faucet_success}}
       <div class="container-fluid">
          <br/><br/><br/><br/>
          <div id="sl">
@@ -130,5 +133,27 @@
       </div>
     </footer>
     <script src="/static/theme.js"></script>
+    {{#faucet_success}}
+    <script>
+      (function () {
+        var rain = document.getElementById("faucetRain");
+        if (!rain || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+
+        var emoticons = ["✨", "🎉", "🥳", "💚", "😄", "🌟"];
+        for (var i = 0; i < 32; i += 1) {
+          var emoticon = document.createElement("span");
+          emoticon.className = "faucet-rain__emoticon";
+          emoticon.textContent = emoticons[i % emoticons.length];
+          emoticon.style.setProperty("--x", Math.random() * 100 + "vw");
+          emoticon.style.setProperty("--drift", (Math.random() * 160 - 80) + "px");
+          emoticon.style.setProperty("--delay", Math.random() * 0.7 + "s");
+          emoticon.style.setProperty("--duration", 2.6 + Math.random() * 1.4 + "s");
+          rain.appendChild(emoticon);
+        }
+
+        window.setTimeout(function () { rain.remove(); }, 4500);
+      }());
+    </script>
+    {{/faucet_success}}
    </body>
 </html>
